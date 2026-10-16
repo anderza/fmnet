@@ -1,4 +1,4 @@
-﻿# RadioNet: сборка APK на Windows. Запускается из «Собрать APK.bat».
+﻿# RadioNet: сборка APK на Windows. Запускается из build-apk.bat.
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch {}

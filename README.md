@@ -35,11 +35,11 @@
 
 ## Собрать APK самому
 
-- **Windows:** дважды щёлкните `Собрать APK.bat`. Скрипт сам скачает Java и инструменты Android в `C:\RadioNetBuild` и положит `RadioNet.apk` рядом.
+- **Windows:** дважды щёлкните `build-apk.bat`. Скрипт сам скачает Java и инструменты Android в `C:\RadioNetBuild` и положит `RadioNet.apk` рядом.
 - **Android Studio:** File → Open → эта папка, затем Build → Generate APKs.
 - **Linux / macOS:** `tools/build-apk.sh`.
 
-Подробнее — в файле `КАК СОБРАТЬ APK.txt`.
+Подробнее — в файле `README-APK.txt`.
 
 ## Сборка на GitHub
 
