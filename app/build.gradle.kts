@@ -2,7 +2,9 @@ plugins {
     id("com.android.application")
 }
 
-val runNumber = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInt()
+// Номер версии растёт со временем, поэтому любая новая сборка (своя или с GitHub) ставится поверх старой
+val buildMinutes = ((System.currentTimeMillis() / 1000L - 1767225600L) / 60L).toInt()
+val runNumber = System.getenv("GITHUB_RUN_NUMBER")
 
 android {
     namespace = "com.anderza.fmnet"
@@ -12,8 +14,8 @@ android {
         applicationId = "com.anderza.fmnet"
         minSdk = 21
         targetSdk = 34
-        versionCode = runNumber
-        versionName = "1.0.$runNumber"
+        versionCode = buildMinutes
+        versionName = if (runNumber != null) "1.0.$runNumber" else "1.0.local"
     }
 
     signingConfigs {

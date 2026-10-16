@@ -33,7 +33,15 @@
 - `MainActivity.java` — окно приложения, кнопка «Назад», пульт, выбор файлов, сохранение в «Загрузки».
 - `PlaybackService.java` — фоновое воспроизведение и уведомление.
 
-## Сборка
+## Собрать APK самому
+
+- **Windows:** дважды щёлкните `Собрать APK.bat`. Скрипт сам скачает Java и инструменты Android в `C:\RadioNetBuild` и положит `RadioNet.apk` рядом.
+- **Android Studio:** File → Open → эта папка, затем Build → Generate APKs.
+- **Linux / macOS:** `tools/build-apk.sh`.
+
+Подробнее — в файле `КАК СОБРАТЬ APK.txt`.
+
+## Сборка на GitHub
 
 Каждый push в `main` запускает GitHub Actions: собирается подписанный APK и публикуется новый релиз. Локально: `./gradlew assembleRelease` (нужен Android SDK и JDK 17).
 

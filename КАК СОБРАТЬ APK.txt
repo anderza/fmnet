@@ -1,0 +1,37 @@
+RadioNet — как собрать APK для Android-смартфона и Android TV
+=============================================================
+
+СПОСОБ 1. Windows, одним щелчком (ничего заранее ставить не нужно)
+  1. Распакуйте архив в любую папку.
+  2. Дважды щёлкните «Собрать APK.bat».
+  3. Дождитесь надписи «ГОТОВО». Файл RadioNet.apk появится рядом с .bat.
+     Первый раз скрипт скачивает Java и инструменты Android (около 1,5 ГБ
+     в папку C:\RadioNetBuild), это 10–20 минут. Потом сборка идёт 1–3 минуты.
+  Если Windows спросит про запуск — нажмите «Подробнее» → «Выполнить в любом случае».
+
+СПОСОБ 2. Android Studio
+  1. Установите Android Studio (developer.android.com/studio).
+  2. File → Open → выберите эту папку. Дождитесь окончания синхронизации.
+  3. Build → Generate App Bundles or APKs → Generate APKs.
+     Готовый файл: app/build/outputs/apk/release/app-release.apk
+
+СПОСОБ 3. Linux или macOS
+  Выполните в терминале: tools/build-apk.sh
+  Файл RadioNet.apk появится в папке проекта.
+
+СПОСОБ 4. Без компьютера — через GitHub
+  Загрузите содержимое папки в свой репозиторий на GitHub (ветка main).
+  GitHub сам соберёт APK и выложит его в раздел Releases.
+
+УСТАНОВКА
+  Телефон: скопируйте RadioNet.apk, откройте его и разрешите установку.
+  Android TV: передайте файл на флешке или через «Send Files to TV»,
+              откройте файловым менеджером.
+  BlueStacks: перетащите RadioNet.apk в окно BlueStacks.
+  Новые сборки ставятся поверх старых, станции и настройки сохраняются.
+
+ЧТО МЕНЯТЬ
+  Интерфейс плеера: app/src/main/assets/index.html
+  Название приложения: app/src/main/res/values/strings.xml
+  Значок: app/src/main/res/mipmap-*/ic_launcher.png
+  Баннер для TV: app/src/main/res/drawable-xhdpi/tv_banner.png
