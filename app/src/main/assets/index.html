@@ -85,6 +85,15 @@ main{padding-block:10px calc(var(--dockh,240px) + 24px)}
 @media (hover:hover){.card:hover{background:var(--panel-2)} .logo:hover::before{opacity:1}}
 .card:active{transform:scale(.98)}
 .card.cur{box-shadow:0 0 0 2px var(--gold),0 3px 10px var(--shadow)}
+.card.dead{opacity:.5}
+.card .chk{position:absolute;left:18px;bottom:calc(2.5em + 44px);z-index:2;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--panel);color:var(--muted)}
+.card .chk.ok{color:#7fd8a0}.card .chk.dead{color:#ff8a80}
+.listbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:2px 0 12px;color:var(--on-stage);font-weight:600;font-size:13px}
+.listbar .grow{flex:1;min-width:120px;opacity:.85}
+.listbar button{height:34px;padding:0 14px;border-radius:999px;background:var(--panel);color:var(--ink);font-weight:700;font-size:13px}
+.listbar button.pri{background:var(--gold);color:var(--gold-ink)}
+.listbar button:disabled{opacity:.5;cursor:default}
+.tv .listbar{font-size:17px}.tv .listbar button{height:46px;font-size:16px;padding:0 20px}
 .logo{aspect-ratio:1;max-width:100%;border-radius:12px;background:var(--groove);display:grid;place-items:center;overflow:hidden;position:relative}
 .logo::before{content:"";position:absolute;inset:0;background:radial-gradient(circle,rgba(0,0,0,.45) 0 22%,transparent 23%),
   url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f3c98e'%3E%3Cpath d='M4 4h6v2H6v4H4zm10 0h6v6h-2V6h-4zM4 14h2v4h4v2H4zm14 0h2v6h-6v-2h4z'/%3E%3C/svg%3E") center/20% no-repeat;opacity:0;transition:opacity .15s;pointer-events:none;z-index:1}
@@ -348,6 +357,7 @@ html.full-open .toast{bottom:max(24px,env(safe-area-inset-bottom,0px))}
 
 <main class="wrap">
   <div class="status" id="status">Загружаю радиостанции…</div>
+  <div class="listbar" id="listbar" hidden></div>
   <div class="grid" id="grid"></div>
 </main>
 
@@ -482,7 +492,7 @@ const S = {
   cur: null, wantPlay: false, retries: 0, shuffle: false, repeat: true,
   started: 0, acc: 0, sleepEnd: 0,
   set: { dark: true, search: true, auto: false, logos: true, cols: 'auto', country: 'RU', vol: 80, tv: 'auto', autoFull: false, source: 'fmplay', nowPlaying: true, covers: true },
-  np: {}, srcActive: null,
+  np: {}, srcActive: null, bells: [], bellsMissing: [], bellsBusy: false, bellsDone: 0, check: {}, checking: false,
 };
 const APP = !!(window.Android && window.Android.isApp);
 const APP_TV = (() => { try { return !!(window.Android && window.Android.isTv && window.Android.isTv()); } catch(e){ return false; } })();
@@ -635,8 +645,118 @@ async function fetchStations(){
   render(true);
 }
 
-function allKnown(){ return [...S.custom, ...S.stations, ...Object.values(S.favs)]; }
+function allKnown(){ return [...S.custom, ...S.stations, ...S.bells, ...Object.values(S.favs)]; }
 function findSt(id){ return allKnown().find(s => s.id === id); }
+
+
+/* RadioBells rock stations: names from radiobells.com/rock, streams found in Radio Browser and verified on this device */
+const BELLS_KEY = 'radionet-bells-v1';
+const BELLS_ROCK = ['Наше радио','Радио Максимум','Радио ИСКАТЕЛЬ','Русское Радио Русский Рок','Русский Рок','ROCK FM','Радио Минск','Радио ULTRA','Record Rock','Рок Арсенал','Радио Весна','Радио Король и Шут','Атаман FM','Радио Движение','Радио Ангелов','MOTORADIO','RTFM','Наше Радио 2.0','Радио Пирамида','Радио Шок','CORE RADIO','Неслучайное радио','Радио Контур','Polygon FM','Радио Арис','Наше Радио Классик Рок','Экспресс радио','Свой стиль','Салют Fm','AlexFM','Радио Zefirot','Радио Голос Истины','Квант Радио','Tengri FM','UltraPlay'];
+const BELLS_ALIAS = { 'Радио Максимум': ['Maximum','Максимум'], 'Радио ИСКАТЕЛЬ': ['Искатель','Iskatel'], 'Радио ULTRA': ['Ultra'], 'Record Rock': ['Record Rock','Рекорд Рок'], 'Радио Король и Шут': ['Король и Шут'], 'Наше Радио 2.0': ['Наше 2.0','Nashe 2.0'], 'Наше Радио Классик Рок': ['Наше Классика','Nashe Classic'], 'Радио Минск': ['Radio Minsk','Минск'], 'ROCK FM': ['Rock FM'], 'Радио Весна': ['Весна'], 'Атаман FM': ['Атаман'], 'Радио Шок': ['Шок'], 'Радио Пирамида': ['Пирамида'], 'Радио Ангелов': ['Ангелов'], 'Радио Движение': ['Движение'], 'Радио Контур': ['Контур'], 'Радио Арис': ['Арис'], 'Экспресс радио': ['Экспресс'], 'Салют Fm': ['Салют'], 'Радио Zefirot': ['Zefirot'], 'Радио Голос Истины': ['Голос Истины'], 'Квант Радио': ['Квант'], 'Неслучайное радио': ['Неслучайное'] };
+function loadBellsCache(){ try { const d = JSON.parse(localStorage.getItem(BELLS_KEY) || 'null'); if (d && Array.isArray(d.list)) { S.bells = d.list; S.bellsMissing = d.missing || []; S.bellsAt = d.at || 0; S.bells.forEach(s => S.check[s.id] = 'ok'); } } catch(e){} }
+function saveBellsCache(){ try { localStorage.setItem(BELLS_KEY, JSON.stringify({ list: S.bells, missing: S.bellsMissing, at: S.bellsAt })); } catch(e){} }
+
+/* stream probe: true when the browser can actually start decoding the stream */
+function probe(url, ms = 10000){
+  return new Promise(res => {
+    const a = new Audio(); let done = false;
+    const fin = ok => { if (done) return; done = true; clearTimeout(t); a.removeAttribute('src'); try { a.load(); } catch(e){} res(ok); };
+    const t = setTimeout(() => fin(false), ms);
+    a.muted = true; a.preload = 'auto';
+    a.addEventListener('canplay', () => fin(true)); a.addEventListener('loadeddata', () => fin(true));
+    a.addEventListener('error', () => fin(false));
+    try { a.src = url; a.load(); } catch(e){ fin(false); }
+  });
+}
+async function pool(items, n, fn){ let i = 0; await Promise.all(Array.from({ length: Math.min(n, items.length) }, async () => { while (i < items.length) { const k = i++; await fn(items[k], k); } })); }
+async function rbByName(q){
+  for (const base of MIRRORS){
+    try { const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 8000);
+      const r = await fetch(`${base}/json/stations/byname/${encodeURIComponent(q)}?hidebroken=true&order=clickcount&reverse=true&limit=12`, { signal: ctl.signal }); clearTimeout(to);
+      if (r.ok) return await r.json(); } catch(e){}
+  }
+  return null;
+}
+const norm = v => String(v || '').toLowerCase().replace(/ё/g, 'е').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+function scoreRb(x, name){
+  const n = norm(x.name), want = norm(name), core = norm(name.replace(/радио|radio|fm/gi, ''));
+  let sc = 0;
+  if (n === want) sc += 6; else if (core && n.includes(core)) sc += 3;
+  if (/(^|,)\s*(ru|by|ua|kz)\s*$/i.test(x.countrycode || '') || ['RU','BY','UA','KZ'].includes(x.countrycode)) sc += 2;
+  if (/rock|рок/i.test(x.tags || '') || /rock|рок/i.test(x.name || '')) sc += 2;
+  sc += Math.min(2, Math.log10((x.clickcount || 0) + 1) / 2);
+  return sc;
+}
+async function loadBells(){
+  if (S.bellsBusy) return;
+  S.bellsBusy = true; S.bellsDone = 0; render();
+  const found = [], missing = []; let offline = true;
+  await pool(BELLS_ROCK, 4, async (name, idx) => {
+    const queries = [name, ...(BELLS_ALIAS[name] || [])];
+    let cands = [], seen = new Set();
+    for (const q of queries){
+      const r = await rbByName(q); if (r) offline = false;
+      (r || []).forEach(x => { if (x.url_resolved && !x.hls && !seen.has(x.stationuuid)) { seen.add(x.stationuuid); cands.push(x); } });
+      if (cands.some(x => scoreRb(x, name) >= 6)) break;
+    }
+    cands = cands.filter(x => scoreRb(x, name) >= 3).sort((a, b) => scoreRb(b, name) - scoreRb(a, name)).slice(0, 3);
+    let hit = null;
+    for (const x of cands){ if (await probe(x.url_resolved)) { hit = x; break; } }
+    if (hit) found.push({ id: 'rb-' + hit.stationuuid, name, url: hit.url_resolved, logo: hit.favicon || '', tags: [...new Set(['rock', ...String(hit.tags || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean)])].join(','), bitrate: hit.bitrate || 0, order: idx, src: 'radiobells' });
+    else missing.push(name);
+    S.bellsDone++; renderListbar(S.view);
+  });
+  S.bellsBusy = false;
+  if (!offline || found.length){
+    found.sort((a, b) => a.order - b.order);
+    S.bells = found; S.bellsMissing = missing; S.bellsAt = Date.now();
+    found.forEach(s => S.check[s.id] = 'ok');
+    saveBellsCache();
+    toast(`Рок · RadioBells: работают ${found.length} из ${BELLS_ROCK.length}`);
+  } else toast('Нет связи с каталогом станций. Проверьте интернет');
+  render();
+}
+
+/* stream check for any list */
+async function checkList(list){
+  if (S.checking || !list.length) return;
+  S.checking = true; let ok = 0, n = 0;
+  list.forEach(s => S.check[s.id] = 'wait'); render();
+  await pool(list.slice(), 4, async s => {
+    const good = await probe(s.url); S.check[s.id] = good ? 'ok' : 'dead'; if (good) ok++; n++;
+    const c = $('grid').querySelector(`.card[data-id="${CSS.escape(s.id)}"]`);
+    if (c) { c.classList.toggle('dead', !good); const b = c.querySelector('.chk'); if (b) { b.className = 'chk ' + (good ? 'ok' : 'dead'); b.textContent = good ? '● в эфире' : 'нет потока'; } }
+    renderListbar(S.view, `Проверено ${n} из ${list.length}`);
+  });
+  S.checking = false; render();
+  toast(`Работают ${ok} из ${list.length}`);
+}
+function renderListbar(list, progress){
+  const bar = $('listbar'); if (!bar) return;
+  const show = ['bells', 'mine', 'fav'].includes(S.tab) || (S.tab === 'all' && list.length && list.length <= 300);
+  bar.hidden = !show; if (!show) return;
+  const dead = list.filter(s => S.check[s.id] === 'dead');
+  let info = progress || '';
+  if (!info && S.tab === 'bells') info = S.bellsBusy ? `Ищу и проверяю потоки: ${S.bellsDone} из ${BELLS_ROCK.length}` :
+    S.bells.length ? `Станции с radiobells.com/rock · работают ${S.bells.length} из ${BELLS_ROCK.length}${S.bellsAt ? ' · проверено ' + new Date(S.bellsAt).toLocaleDateString('ru-RU') : ''}` : '';
+  if (!info && dead.length) info = `Нет потока: ${dead.length}`;
+  if (!info && list.length && list.every(s => S.check[s.id] === 'ok')) info = `Все потоки работают (${list.length})`;
+  bar.innerHTML = `<span class="grow">${esc(info)}</span>` +
+    (S.tab === 'bells'
+      ? `<button type="button" id="lbBells" ${S.bellsBusy ? 'disabled' : ''}>Проверить заново</button>` +
+        (S.bells.length && !S.bellsBusy ? `<button type="button" id="lbAddMine" class="pri">Добавить в «Мои»</button>` : '') +
+        (S.bellsMissing.length && !S.bellsBusy ? `<button type="button" id="lbMissing">Не найдены: ${S.bellsMissing.length}</button>` : '')
+      : `<button type="button" id="lbCheck" ${S.checking ? 'disabled' : ''}>Проверить потоки</button>` +
+        (S.tab === 'mine' && dead.length && !S.checking ? `<button type="button" id="lbDrop" class="pri">Удалить без потока (${dead.length})</button>` : ''));
+  const on = (id, fn) => { const b = $(id); if (b) b.onclick = fn; };
+  on('lbBells', () => loadBells());
+  on('lbCheck', () => checkList(S.view));
+  on('lbMissing', () => toast('Не найдены: ' + S.bellsMissing.join(', ')));
+  on('lbDrop', () => { const ids = new Set(dead.map(s => s.id)); S.custom = S.custom.filter(s => !ids.has(s.id)); ids.forEach(id => delete S.favs[id]); save(); render(); toast(`Удалено станций: ${ids.size}`); });
+  on('lbAddMine', () => { const known = new Set(S.custom.map(s => s.url)); let added = 0;
+    S.bells.forEach(s => { if (!known.has(s.url)) { S.custom.push({ ...s, id: 'my-' + Date.now() + '-' + added, custom: true }); added++; } });
+    save(); render(); toast(added ? `Добавлено в «Мои»: ${added}` : 'Все станции уже в «Мои»'); });
+}
 
 /* rendering */
 function renderTabs(){
@@ -645,6 +765,7 @@ function renderTabs(){
   let h = `<button class="chip" data-tab="all" aria-pressed="${S.tab==='all'}">Все</button>
            <button class="chip" data-tab="fav" aria-pressed="${S.tab==='fav'}">Избранные${favN ? ' · ' + favN : ''}</button>`;
   if (S.custom.length) h += `<button class="chip" data-tab="mine" aria-pressed="${S.tab==='mine'}">Мои · ${S.custom.length}</button>`;
+  h += `<button class="chip" data-tab="bells" aria-pressed="${S.tab==='bells'}">Рок · RadioBells${S.bells.length ? ' · ' + S.bells.length : ''}</button>`;
   h += `<span class="chip sep">|</span>`;
   h += GENRES.map(([k, n]) => `<button class="chip" data-tag="${k}" aria-pressed="${S.tab==='all' && S.tag===k}">${n}</button>`).join('');
   const focusKey = document.activeElement && t.contains(document.activeElement) ? (document.activeElement.dataset.tab ?? 'g:' + document.activeElement.dataset.tag) : null;
@@ -658,10 +779,12 @@ function logoHTML(st){
 function render(failed){
   renderTabs();
   const focusedId = document.activeElement?.closest?.('.card')?.dataset.id;
-  let list = S.tab === 'fav' ? Object.values(S.favs) : S.tab === 'mine' ? S.custom : [...S.custom, ...S.stations];
+  if (S.tab === 'bells' && !S.bells.length && !S.bellsBusy) { loadBells(); }
+  let list = S.tab === 'fav' ? Object.values(S.favs) : S.tab === 'mine' ? S.custom : S.tab === 'bells' ? S.bells : [...S.custom, ...S.stations];
   if (S.tab === 'all' && S.tag && S.srcActive === 'fmplay') { const g = GENRE_WORDS[S.tag] || [S.tag]; list = list.filter(s => s.custom || g.some(w => (s.tags + ' ' + s.name).toLowerCase().includes(w))); }
   if (S.q) { const q = S.q.toLowerCase(); list = list.filter(s => s.name.toLowerCase().includes(q) || (s.tags||'').toLowerCase().includes(q) || (npFor(s) && npLine(npFor(s)).toLowerCase().includes(q))); }
   S.view = list;
+  renderListbar(list);
   const st = $('status'), g = $('grid');
   g.style.setProperty('--cols', S.set.cols === 'auto' ? 'auto-fill' : S.set.cols);
   if (failed && S.tab === 'all' && !S.custom.length){
@@ -670,14 +793,15 @@ function render(failed){
   }
   if (!list.length){
     st.hidden = false;
-    st.textContent = S.tab === 'fav' ? (isTV() ? 'Нет избранных радиостанций. Удерживайте OK на станции, чтобы добавить её в избранное.' : 'Нет избранных радиостанций. Добавьте станции в избранное через меню ⋮ на карточке.') : S.q ? 'Ничего не найдено.' : 'Нет радиостанций';
+    st.textContent = S.tab === 'bells' ? (S.bellsBusy ? 'Ищу потоки рок-станций RadioBells…' : 'Не удалось найти работающие потоки. Проверьте подключение к интернету и нажмите «Проверить заново».') : S.tab === 'fav' ? (isTV() ? 'Нет избранных радиостанций. Удерживайте OK на станции, чтобы добавить её в избранное.' : 'Нет избранных радиостанций. Добавьте станции в избранное через меню ⋮ на карточке.') : S.q ? 'Ничего не найдено.' : 'Нет радиостанций';
   } else st.hidden = true;
   const tv = isTV();
   g.innerHTML = list.map(s => `
-    <div class="card${S.cur && S.cur.id === s.id ? ' cur' : ''}" role="button" tabindex="0" data-id="${esc(s.id)}" aria-label="${esc(s.name)}">
+    <div class="card${S.cur && S.cur.id === s.id ? ' cur' : ''}${S.check[s.id] === 'dead' ? ' dead' : ''}" role="button" tabindex="0" data-id="${esc(s.id)}" aria-label="${esc(s.name)}">
       <div class="logo" title="Открыть плеер на весь экран">${logoHTML(s)}${S.cur && S.cur.id === s.id && S.wantPlay ? '<div class="eq"><i></i><i></i><i></i></div>' : ''}</div>
       ${S.favs[s.id] ? '<span class="fav"><svg><use href="#i-heart"/></svg></span>' : ''}
       <button class="more" data-more="${esc(s.id)}" aria-label="Меню станции"${tv ? ' tabindex="-1"' : ''}><svg><use href="#i-dots"/></svg></button>
+      ${S.check[s.id] ? `<span class="chk ${S.check[s.id]}">${S.check[s.id] === 'ok' ? '● в эфире' : S.check[s.id] === 'dead' ? 'нет потока' : 'проверка…'}</span>` : ''}
       <div class="nm">${esc(s.name)}</div>
       <div class="sub">${esc(npFor(s) ? npLine(npFor(s)) : subline(s))}</div>
     </div>`).join('');
@@ -1236,7 +1360,7 @@ new ResizeObserver(() => root.style.setProperty('--dockh', $('dock').offsetHeigh
 addEventListener('resize', () => closeMenu(false));
 
 /* boot */
-load(); applySettings(); setVol(S.set.vol); renderTabs();
+load(); loadBellsCache(); applySettings(); setVol(S.set.vol); renderTabs();
 if (S.last){ S.cur = S.last; setCover(S.cur); }
 updatePlayerUI(); updateFsIcon();
 fetchStations().then(() => {
