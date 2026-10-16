@@ -350,6 +350,27 @@ public class MainActivity extends Activity {
             }
         }
 
+        /** Узнаёт текущий трек потока в фоне и вызывает window[callback](строка). */
+        @JavascriptInterface
+        public void icy(final String url, final String callback) {
+            if (callback == null || !callback.matches("[A-Za-z0-9_$]+")) return;
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    String title = IcyReader.read(url);
+                    final String js = "window['" + callback + "'] && window['" + callback + "']("
+                            + org.json.JSONObject.quote(title == null ? "" : title) + ")";
+                    final WebView w = web;
+                    if (w != null) w.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            w.evaluateJavascript(js, null);
+                        }
+                    });
+                }
+            }, "icy").start();
+        }
+
         @JavascriptInterface
         public void exitApp() {
             runOnUiThread(new Runnable() {

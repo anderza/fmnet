@@ -119,7 +119,14 @@ main{padding-block:10px calc(var(--dockh,240px) + 24px)}
 .vinyl{position:absolute;top:6%;bottom:6%;aspect-ratio:1;right:0;border-radius:50%;
   background:repeating-radial-gradient(circle,#1b1d21 0 2px,#24272c 2px 3px);box-shadow:inset 0 0 0 1px #000, 0 2px 6px rgba(0,0,0,.5);
   transform:translateX(12%);transition:transform .7s cubic-bezier(.3,1.3,.5,1)}
-.vinyl::after{content:"";position:absolute;inset:36%;border-radius:50%;background:radial-gradient(circle,#0e0f11 0 12%,var(--gold) 13% 100%);opacity:.9}
+.vinyl::after{content:"";position:absolute;inset:34%;border-radius:50%;opacity:.95;
+  background:radial-gradient(circle at 50% 24%,rgba(20,14,6,.55) 0 7%,transparent 8%),linear-gradient(90deg,transparent 47%,rgba(20,14,6,.35) 47% 53%,transparent 53%) 50% 70%/100% 22% no-repeat,radial-gradient(circle,#0e0f11 0 11%,var(--gold-lo) 12% 15%,var(--gold) 16% 100%)}
+.vinyl::before{content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;background:conic-gradient(from 20deg,transparent 0 10%,rgba(255,255,255,.08) 14%,transparent 20% 60%,rgba(255,255,255,.06) 64%,transparent 70%)}
+.pstate .vinyl.rolling,.vinyl.rolling{animation:none!important;rotate:none}
+.arow{display:flex;align-items:center;justify-content:center;gap:12px;min-width:0}
+.arow .a{min-width:0}
+.avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;flex:none;background:var(--groove);box-shadow:0 0 0 2px var(--gold),0 4px 10px rgba(0,0,0,.5)}
+.tv .avatar{width:64px;height:64px}
 .playing .vinyl{transform:translateX(30%);animation:spin 3.2s linear infinite}
 @keyframes spin{from{rotate:0deg}to{rotate:360deg}}
 .cover{position:absolute;inset:0;border-radius:4px;overflow:hidden;box-shadow:4px 6px 14px rgba(0,0,0,.55);
@@ -201,13 +208,13 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radiu
 .flbl{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--on-stage);opacity:.85;font-weight:700;text-align:center;font-variant-numeric:tabular-nums}
 .fgrip{position:absolute;left:50%;top:-6px;width:44px;height:4px;border-radius:4px;background:var(--on-stage);opacity:.35;transform:translateX(-50%)}
 .fbody{position:relative;flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(18px,4vh,44px)}
-.full .cover-wrap{width:min(68vw,40vh);transform:translateX(-9%)}
+.full .cover-wrap{width:min(60vw,40vh)}
 .fside{width:100%;max-width:560px;background:var(--panel);border-radius:26px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 0 0 1px var(--edge),0 18px 40px rgba(0,0,0,.4)}
 .fextra{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
 .fextra .tbtn{box-shadow:none;background:var(--panel-2);width:44px;height:44px}
 @media (min-aspect-ratio:5/4) and (min-width:700px){
   .fbody{flex-direction:row;gap:7vw}
-  .full .cover-wrap{width:min(36vw,58vh)}
+  .full .cover-wrap{width:min(34vw,56vh);margin-left:calc(min(34vw,56vh) * .26)}
   .fside{max-width:540px}
 }
 @media (max-width:640px){
@@ -412,7 +419,7 @@ html.full-open .toast{bottom:max(24px,env(safe-area-inset-bottom,0px))}
     <div class="cover-wrap"><div class="vinyl"></div><div class="cover" data-b="cover"><span class="ini bi">RADIO<b>·</b>NET</span></div></div>
     <div class="fside">
       <div class="meta">
-        <div class="a" data-b="station">RadioNet</div>
+        <div class="arow"><img class="avatar" data-b="artistimg" alt="" referrerpolicy="no-referrer" hidden><div class="a" data-b="station">RadioNet</div></div>
         <div class="t" data-b="info">Выберите радиостанцию</div>
         <div class="tm" data-b="time">[0:00]</div>
       </div>
@@ -462,7 +469,7 @@ html.full-open .toast{bottom:max(24px,env(safe-area-inset-bottom,0px))}
     <option value="fmplay">FMPLAY (как в приложении)</option><option value="rb">Radio Browser (открытый каталог)</option>
   </select><small id="srcNote" style="color:var(--muted);font-size:12px"></small></div>
   <div class="row"><div class="lbl">Логотипы станций</div><label class="sw"><input type="checkbox" id="stLogos"><span></span></label></div>
-  <div class="row"><div class="lbl">Что сейчас играет<small>Исполнитель и название трека (каталог FMPLAY)</small></div><label class="sw"><input type="checkbox" id="stNow"><span></span></label></div>
+  <div class="row"><div class="lbl">Что сейчас играет<small>Исполнитель, название трека, фото альбома и артиста</small></div><label class="sw"><input type="checkbox" id="stNow"><span></span></label></div>
   <div class="row"><div class="lbl">Обложки альбомов<small>Загружать обложки (увеличивает расход трафика)</small></div><label class="sw"><input type="checkbox" id="stCovers"><span></span></label></div>
   <div class="row"><div class="lbl">Плеер на весь экран<small>Открывать при выборе станции</small></div><label class="sw"><input type="checkbox" id="stAutoFull"><span></span></label></div>
   <div class="field"><label>Режим Android TV</label><div class="seg" id="stTv"></div></div>
@@ -614,12 +621,13 @@ async function pollNow(){
     S.stations.forEach(s => { if (s.fmKey) byKey[s.fmKey] = s.id; if (s.meta) byKey[String(s.meta)] = s.id; byKey[s.name.toLowerCase()] = s.id; });
     const entries = Array.isArray(j) ? j.map(v => [pick(v, ['id','uid','code','alias','slug','station_id','station']) ?? pick(v, ['name']), v])
       : Object.entries(j && typeof j === 'object' && (j.stations || j.data) && !Array.isArray(j) ? (j.stations || j.data) : j || {});
-    let changed = false;
+    let changed = false, curChanged = false;
     for (const [k, v] of Array.isArray(entries) ? entries : Object.entries(entries)){
       const id = byKey[String(k)] || byKey[String(k).toLowerCase()]; const n = parseNow(v, got.url);
-      if (id && n){ const o = S.np[id]; if (!o || o.title !== n.title || o.artist !== n.artist || o.cover !== n.cover) { S.np[id] = n; changed = true; } }
+      if (id && n){ const o = S.np[id]; if (!o || o.title !== n.title || o.artist !== n.artist || o.cover !== n.cover) { S.np[id] = n; changed = true; if (S.cur && S.cur.id === id) curChanged = true; } }
     }
     if (changed) { refreshNowUI(); }
+    if (curChanged) { rollVinyl(); updateArt(); }
   }
   npTimer = setTimeout(pollNow, document.hidden ? 60000 : 20000);
 }
@@ -772,6 +780,92 @@ function renderListbar(list, progress){
     save(); render(); toast(added ? `Добавлено в «Мои»: ${added}` : 'Все станции уже в «Мои»'); });
 }
 
+
+/* vinyl roll: from under the cover to the left edge and back to the right, rotating as it rolls */
+function rollVinyl(){
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  $$('.vinyl').forEach(v => {
+    if (!v.getClientRects().length || !v.animate) return;
+    const playing = !!v.closest('.playing'), end = playing ? 30 : 12, left = v.closest('#full') ? -46 : -20;
+    v.getAnimations().filter(a => a.id === 'roll').forEach(a => a.cancel());
+    v.classList.add('rolling');
+    const a = v.animate([
+      { transform: `translateX(${end}%) rotate(0deg)`, easing: 'cubic-bezier(.45,0,.2,1)' },
+      { transform: `translateX(${left}%) rotate(-200deg)`, offset: .42 },
+      { transform: `translateX(${left}%) rotate(-200deg)`, offset: .5, easing: 'cubic-bezier(.45,0,.2,1)' },
+      { transform: `translateX(${end + 5}%) rotate(25deg)`, offset: .9, easing: 'ease-out' },
+      { transform: `translateX(${end}%) rotate(0deg)` },
+    ], { duration: 1900, easing: 'linear', id: 'roll' });
+    a.id = 'roll';
+    a.onfinish = a.oncancel = () => v.classList.remove('rolling');
+  });
+}
+
+/* album covers and artist photos from Deezer (JSONP) with iTunes as a fallback */
+const ART = {};
+function jsonp(url, ms = 8000){
+  return new Promise(res => {
+    const cb = '__jp' + Math.random().toString(36).slice(2); const sc = document.createElement('script'); let done = false;
+    const fin = v => { if (done) return; done = true; clearTimeout(t); try { delete window[cb]; } catch(e){ window[cb] = undefined; } sc.remove(); res(v); };
+    const t = setTimeout(() => fin(null), ms);
+    window[cb] = d => fin(d); sc.onerror = () => fin(null);
+    sc.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cb; document.head.appendChild(sc);
+  });
+}
+const cleanTitle = t => String(t || '').replace(/\s*[\(\[].*?(remix|mix|edit|version|live|feat|ft\.|radio).*?[\)\]]/gi, '').replace(/\s+(feat|ft)\.?\s.*$/i, '').trim();
+async function findArt(artist, title){
+  const key = (artist + '|' + title).toLowerCase(); if (ART[key]) return ART[key];
+  let album = '', photo = '';
+  const a0 = String(artist || '').split(/\s*(?:,|&|feat\.?|ft\.?|и)\s+/i)[0].trim(), t0 = cleanTitle(title);
+  const q = a0 && t0 ? `artist:"${a0}" track:"${t0}"` : (a0 || t0);
+  if (q) {
+    const dz = await jsonp(`https://api.deezer.com/search?q=${encodeURIComponent(q)}&limit=1&output=jsonp`);
+    const tr = dz && dz.data && dz.data[0];
+    if (tr) { album = (tr.album && (tr.album.cover_xl || tr.album.cover_big)) || ''; photo = (tr.artist && (tr.artist.picture_xl || tr.artist.picture_big)) || ''; }
+  }
+  if (!album && (a0 || t0)) {
+    const it = await jsonp(`https://itunes.apple.com/search?term=${encodeURIComponent((a0 + ' ' + t0).trim())}&entity=song&limit=1`);
+    const r = it && it.results && it.results[0]; if (r && r.artworkUrl100) album = r.artworkUrl100.replace(/\d+x\d+bb/, '600x600bb');
+  }
+  if (!photo && a0) {
+    const da = await jsonp(`https://api.deezer.com/search/artist?q=${encodeURIComponent(a0)}&limit=1&output=jsonp`);
+    const ar = da && da.data && da.data[0]; if (ar) photo = ar.picture_xl || ar.picture_big || '';
+  }
+  if (/\/images\/artist\/\/|\/artist\/\d+x\d+-000000-80-0-0\.jpg$/.test(photo) || /\/cover\/\/|\/images\/cover\/\//.test(album)) { /* Deezer placeholders */ }
+  if (/\/artist\/\//.test(photo)) photo = '';
+  if (/\/cover\/\//.test(album)) album = '';
+  return ART[key] = { album, photo };
+}
+let artSeq = 0;
+async function updateArt(){
+  const st = S.cur, n = npFor(st), seq = ++artSeq;
+  if (!st || !n || !S.set.covers || (!n.artist && !n.title)) { S.art = null; setCover.key = null; setCover(st); return; }
+  const a = await findArt(n.artist, n.title);
+  if (seq !== artSeq || !S.cur || S.cur.id !== st.id) return;
+  S.art = { id: st.id, album: a.album, photo: a.photo };
+  setCover.key = null; setCover(st); updatePlayerUI();
+}
+
+/* in the Android app: read "Artist - Title" from the stream itself (ICY metadata) */
+function parseIcy(t){
+  t = String(t || '').trim(); if (!t || /^(-|unknown|n\/a)$/i.test(t)) return null;
+  const i = t.indexOf(' - ');
+  return i > 0 ? { artist: t.slice(0, i).trim(), title: t.slice(i + 3).trim(), cover: '', icy: true } : { artist: '', title: t, cover: '', icy: true };
+}
+let icyT = null;
+function pollIcy(){
+  clearTimeout(icyT);
+  const st = S.cur;
+  if (!APP || !window.Android.icy || !st || !S.wantPlay || !S.set.nowPlaying || (S.np[st.id] && !S.np[st.id].icy)) { icyT = setTimeout(pollIcy, 10000); return; }
+  const cb = '__icy' + Date.now();
+  window[cb] = t => { window[cb] = undefined;
+    const n = parseIcy(t);
+    if (n && S.cur && S.cur.id === st.id) { const o = S.np[st.id];
+      if (!o || o.artist !== n.artist || o.title !== n.title) { S.np[st.id] = n; refreshNowUI(); rollVinyl(); updateArt(); } }
+    icyT = setTimeout(pollIcy, 15000); };
+  try { window.Android.icy(st.url, cb); } catch(e){ icyT = setTimeout(pollIcy, 15000); }
+}
+
 /* rendering */
 function renderTabs(){
   const t = $('tabs');
@@ -828,13 +922,16 @@ function render(failed){
 
 /* player */
 function setCover(st){
-  const n = npFor(st), art = n && n.cover && S.set.covers ? n.cover : '';
-  const key = st ? st.id + '|' + art + '|' + S.set.logos : '-';
+  const n = npFor(st), look = S.art && st && S.art.id === st.id ? S.art : null;
+  const art = S.set.covers ? ((n && n.cover) || (look && look.album) || '') : '';
+  const photo = S.set.covers && look ? look.photo : '';
+  const key = st ? st.id + '|' + art + '|' + photo + '|' + S.set.logos : '-';
   if (setCover.key === key) return; setCover.key = key;
   let html = st ? logoHTML(st) : '<span class="ini bi">RADIO<b>·</b>NET</span>';
   if (art) html = `<img class="art" src="${esc(art)}" alt="" referrerpolicy="no-referrer" onerror="this.outerHTML=this.dataset.fb" data-fb="${esc(st ? logoHTML(st) : '')}">`;
   $$('[data-b="cover"]').forEach(c => c.innerHTML = html);
-  const bgImg = art || (st && st.logo && S.set.logos ? st.logo : '');
+  $$('[data-b="artistimg"]').forEach(i => { if (photo) { if (i.getAttribute('src') !== photo) i.src = photo; i.hidden = false; i.onerror = () => { i.hidden = true; }; } else { i.hidden = true; i.removeAttribute('src'); } });
+  const bgImg = photo || art || (st && st.logo && S.set.logos ? st.logo : '');
   $$('[data-b="bg"]')[0].style.backgroundImage = bgImg ? `url("${bgImg.replace(/"/g, '%22')}")` : 'none';
 }
 function updatePlayerUI(){
@@ -879,7 +976,7 @@ function play(st){
   if (!st) return;
   const changed = !S.cur || S.cur.id !== st.id;
   S.cur = st; S.wantPlay = true; S.retries = 0;
-  if (changed){ S.acc = 0; setCover.key = null; setCover(st); }
+  if (changed){ S.acc = 0; S.art = null; setCover.key = null; setCover(st); rollVinyl(); updateArt(); }
   S.started = 0;
   audio.src = st.url; audio.volume = S.set.vol / 100;
   audio.play().catch(err => { if (err.name !== 'AbortError') fail(); });
@@ -1163,7 +1260,7 @@ $('stAuto').onchange = e => { S.set.auto = e.target.checked; save(); };
 $('stAutoFull').onchange = e => { S.set.autoFull = e.target.checked; save(); };
 $('stSource').onchange = e => { S.set.source = e.target.value; S.srcActive = null; S.stations = []; S.tag = ''; save(); fetchStations().then(applySettings); };
 $('stNow').onchange = e => { S.set.nowPlaying = e.target.checked; save(); if (S.set.nowPlaying) pollNow(); refreshNowUI(); render(); };
-$('stCovers').onchange = e => { S.set.covers = e.target.checked; save(); setCover.key = null; setCover(S.cur); updatePlayerUI(); };
+$('stCovers').onchange = e => { S.set.covers = e.target.checked; save(); updateArt(); updatePlayerUI(); };
 $('stLogos').onchange = e => { S.set.logos = e.target.checked; save(); render(); setCover.key = null; setCover(S.cur); };
 $('stCols').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.set.cols = b.dataset.c; save(); applySettings(); render(); $('stCols').querySelector(`[data-c="${b.dataset.c}"]`).focus(); };
 $('stTv').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.set.tv = b.dataset.tv; save(); applySettings(); render(); $('stTv').querySelector(`[data-tv="${b.dataset.tv}"]`).focus(); toast(isTV() ? 'Интерфейс для телевизора включён' : 'Интерфейс для телевизора выключен'); };
@@ -1374,7 +1471,7 @@ new ResizeObserver(() => root.style.setProperty('--dockh', $('dock').offsetHeigh
 addEventListener('resize', () => closeMenu(false));
 
 /* boot */
-load(); loadBellsCache(); applySettings(); setVol(S.set.vol); renderTabs();
+load(); loadBellsCache(); setTimeout(pollIcy, 4000); applySettings(); setVol(S.set.vol); renderTabs();
 if (S.last){ S.cur = S.last; setCover(S.cur); }
 updatePlayerUI(); updateFsIcon();
 fetchStations().then(() => {
