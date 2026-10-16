@@ -1,0 +1,1248 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e6b8d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>RadioNet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Orbitron:wght@500;700&display=swap">
+<style>
+/* Layout: teal stage, header + station grid, docked neumorphic player; full-screen player overlay; .tv = 10-foot UI */
+:root{
+  --stage-a:#0e6b8d; --stage-b:#07344b; --on-stage:#e8f3f8;
+  --panel:#272c34; --panel-2:#2f353e; --panel-hi:#363d47;
+  --ink:#d6dce6; --muted:#8a919d; --faint:#5d6470;
+  --gold:#f3c98e; --gold-ink:#2b2216;
+  --groove:#14171c; --edge:rgba(255,255,255,.06);
+  --knob-a:#4b535e; --knob-b:#343a43; --ring-a:#2b3038; --ring-b:#1d2026;
+  --icon:#c3c9d3; --shadow:rgba(0,0,0,.45);
+  --font-ui:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-led:"Orbitron","Roboto Mono",ui-monospace,monospace;
+  color-scheme:dark;
+}
+:root[data-theme="light"]{
+  --stage-a:#8fc7da; --stage-b:#4f93ae; --on-stage:#16303d;
+  --panel:#eef1f5; --panel-2:#e3e8ee; --panel-hi:#d8dee6;
+  --ink:#27303b; --muted:#66707d; --faint:#9aa3ae;
+  --gold:#b97a2e; --gold-ink:#fff;
+  --groove:#c9d0d9; --edge:rgba(0,0,0,.06);
+  --knob-a:#ffffff; --knob-b:#dfe4ea; --ring-a:#d5dbe3; --ring-b:#e9edf2;
+  --icon:#56606d; --shadow:rgba(40,60,80,.25);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+html{scrollbar-color:var(--panel-hi) transparent}
+body{margin:0;font-family:var(--font-ui);color:var(--ink);font-size:14px;
+  background:linear-gradient(160deg,var(--stage-a),var(--stage-b)) fixed;background-color:var(--stage-b);
+  -webkit-tap-highlight-color:transparent}
+html.full-open body{overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible,input:focus-visible,select:focus-visible,[role="button"]:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+[hidden]{display:none!important}
+svg{display:block}
+
+.wrap{max-width:1100px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+@media (min-width:1500px){.wrap{max-width:1400px}}
+
+/* header */
+header{position:sticky;top:0;z-index:20;padding-block:max(14px,env(safe-area-inset-top,0px)) 10px;
+  background:linear-gradient(var(--stage-a),color-mix(in srgb,var(--stage-a) 85%,transparent));backdrop-filter:blur(8px)}
+.bar{display:flex;align-items:center;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.03em;font-size:16px;color:var(--on-stage);white-space:nowrap}
+.brand .dot{width:30px;height:30px;border-radius:50%;background:var(--panel);display:grid;place-items:center;box-shadow:0 2px 6px var(--shadow)}
+.brand .dot i{width:10px;height:10px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 4px var(--groove)}
+.search{flex:1;min-width:0;display:flex;align-items:center;gap:8px;background:var(--panel);border-radius:999px;padding:0 14px;height:40px;box-shadow:inset 0 2px 4px rgba(0,0,0,.25)}
+.search input{flex:1;min-width:0;background:none;border:0;color:var(--ink);font:inherit;font-size:14px;height:100%}
+.search input:focus{outline:none}
+.search:focus-within{box-shadow:inset 0 2px 4px rgba(0,0,0,.25),0 0 0 2px var(--gold)}
+.search input::placeholder{color:var(--faint)}
+.search svg{flex:none;fill:var(--muted)}
+.tools{display:flex;gap:6px}
+.tbtn{width:40px;height:40px;border-radius:50%;background:var(--panel);display:grid;place-items:center;box-shadow:0 2px 6px var(--shadow);position:relative;flex:none}
+.tbtn svg{fill:var(--icon);width:20px;height:20px}
+.tbtn.on svg{fill:var(--gold)}
+.sleepchip{height:40px;border-radius:999px;background:var(--panel);color:var(--gold);padding:0 14px;display:flex;align-items:center;gap:6px;font-weight:700;font-variant-numeric:tabular-nums;box-shadow:0 2px 6px var(--shadow)}
+.sleepchip svg{fill:var(--gold);width:16px;height:16px}
+
+.tabs{display:flex;gap:8px;margin-top:12px;overflow-x:auto;scrollbar-width:none;padding:3px 3px 4px}
+.tabs::-webkit-scrollbar{display:none}
+.chip{flex:none;height:32px;padding:0 14px;border-radius:999px;background:color-mix(in srgb,var(--panel) 70%,transparent);color:var(--ink);font-weight:600;font-size:13px;white-space:nowrap;scroll-margin:0 24px}
+.chip[aria-pressed="true"]{background:var(--gold);color:var(--gold-ink)}
+.chip.sep{background:none;padding:0 2px;color:var(--faint);pointer-events:none}
+
+/* grid */
+main{padding-block:10px calc(var(--dockh,240px) + 24px)}
+.status{color:var(--on-stage);opacity:.85;padding:28px 4px;text-align:center;font-weight:500}
+.status button{margin-top:12px;background:var(--gold);color:var(--gold-ink);padding:9px 18px;border-radius:999px;font-weight:700}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(var(--cols,auto-fill),minmax(150px,1fr))}
+.card{position:relative;background:var(--panel);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:10px;text-align:left;box-shadow:0 3px 10px var(--shadow);transition:transform .15s,background .15s,box-shadow .15s;min-width:0;cursor:pointer;
+  scroll-margin:150px 0 calc(var(--dockh,240px) + 20px)}
+@media (hover:hover){.card:hover{background:var(--panel-2)} .logo:hover::before{opacity:1}}
+.card:active{transform:scale(.98)}
+.card.cur{box-shadow:0 0 0 2px var(--gold),0 3px 10px var(--shadow)}
+.logo{aspect-ratio:1;max-width:100%;border-radius:12px;background:var(--groove);display:grid;place-items:center;overflow:hidden;position:relative}
+.logo::before{content:"";position:absolute;inset:0;background:radial-gradient(circle,rgba(0,0,0,.45) 0 22%,transparent 23%),
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f3c98e'%3E%3Cpath d='M4 4h6v2H6v4H4zm10 0h6v6h-2V6h-4zM4 14h2v4h4v2H4zm14 0h2v6h-6v-2h4z'/%3E%3C/svg%3E") center/20% no-repeat;opacity:0;transition:opacity .15s;pointer-events:none;z-index:1}
+.logo img{width:72%;height:72%;object-fit:contain}
+.logo .ini{font-weight:800;font-size:28px;color:var(--gold);letter-spacing:.04em}
+.card .nm{font-weight:700;font-size:14px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:2.5em}
+.card .sub{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:-6px}
+.card .more{position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:50%;background:color-mix(in srgb,var(--panel) 85%,transparent);display:grid;place-items:center;z-index:2}
+.card .more svg{fill:var(--icon);width:18px;height:18px}
+.card .fav{position:absolute;top:16px;left:16px;width:22px;height:22px;z-index:2}
+.card .fav svg{fill:var(--gold);width:18px;height:18px}
+.eq{position:absolute;bottom:8px;right:8px;display:flex;gap:2px;align-items:flex-end;height:16px;z-index:2}
+.eq i{width:3px;background:var(--gold);border-radius:2px;animation:eq 1s infinite ease-in-out}
+.eq i:nth-child(2){animation-delay:-.3s}.eq i:nth-child(3){animation-delay:-.6s}
+@keyframes eq{0%,100%{height:4px}50%{height:16px}}
+
+/* shared player parts */
+.cover-wrap{position:relative;width:200px;aspect-ratio:1;max-width:100%;flex:none}
+.vinyl{position:absolute;top:6%;bottom:6%;aspect-ratio:1;right:0;border-radius:50%;
+  background:repeating-radial-gradient(circle,#1b1d21 0 2px,#24272c 2px 3px);box-shadow:inset 0 0 0 1px #000, 0 2px 6px rgba(0,0,0,.5);
+  transform:translateX(12%);transition:transform .7s cubic-bezier(.3,1.3,.5,1)}
+.vinyl::after{content:"";position:absolute;inset:36%;border-radius:50%;background:radial-gradient(circle,#0e0f11 0 12%,var(--gold) 13% 100%);opacity:.9}
+.playing .vinyl{transform:translateX(30%);animation:spin 3.2s linear infinite}
+@keyframes spin{from{rotate:0deg}to{rotate:360deg}}
+.cover{position:absolute;inset:0;border-radius:4px;overflow:hidden;box-shadow:4px 6px 14px rgba(0,0,0,.55);
+  background:
+   radial-gradient(120% 90% at 30% 25%,rgba(255,255,255,.12),transparent 60%),
+   url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .18 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+   #17191c;display:grid;place-items:center;container-type:inline-size}
+.cover img{width:66%;height:66%;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.6))}
+.cover img.art{width:100%;height:100%;object-fit:cover;filter:none}
+.cover .ini{font-weight:800;font-size:clamp(14px,22cqi,140px);color:#eae6df;letter-spacing:.06em;text-shadow:0 2px 0 rgba(0,0,0,.4)}
+.cover .ini b{color:#b3263a;font-weight:800}
+.cover .ini.bi{font-size:clamp(9px,11.5cqi,64px);letter-spacing:.04em}
+.meta{text-align:center;min-width:0}
+.meta .a{color:var(--gold);font-weight:700;font-size:24px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta .t{font-size:21px;color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.meta .tm{color:var(--faint);font-size:15px;margin-top:2px;font-variant-numeric:tabular-nums}
+.groove{display:flex;align-items:center;gap:10px}
+.groove svg{fill:var(--faint);width:16px;height:16px;flex:none}
+input[type=range]{-webkit-appearance:none;appearance:none;flex:1;min-width:0;height:4px;border-radius:4px;background:linear-gradient(90deg,var(--gold) var(--v,80%),var(--groove) var(--v,80%));box-shadow:0 1px 0 var(--edge);cursor:pointer;margin:10px 0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--knob-a);box-shadow:0 1px 3px rgba(0,0,0,.6)}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radius:50%;background:var(--knob-a)}
+.controls{display:flex;align-items:center;justify-content:center;gap:clamp(4px,1.2vw,12px)}
+.ring{border-radius:50%;display:grid;place-items:center;flex:none;background:radial-gradient(circle at 50% 35%,var(--ring-a),var(--ring-b));box-shadow:inset 0 2px 5px rgba(0,0,0,.45),0 1px 0 var(--edge)}
+.knob{border-radius:50%;display:grid;place-items:center;position:relative;background:linear-gradient(180deg,var(--knob-a),var(--knob-b));box-shadow:0 4px 8px var(--shadow),inset 0 1px 0 rgba(255,255,255,.12);transition:transform .1s,box-shadow .15s}
+.knob:active{transform:scale(.95)}
+.knob svg{fill:var(--icon)}
+.knob:focus-visible,.r-sm:focus-visible .knob{outline:none;box-shadow:0 0 0 3px var(--gold),0 4px 8px var(--shadow)}
+.r-sm:focus-visible{outline:none}
+.r-sm{padding:0;flex:none;border-radius:50%}.r-sm .knob{width:46px;height:46px;background:radial-gradient(circle at 50% 35%,var(--ring-a),var(--ring-b));box-shadow:inset 0 2px 4px rgba(0,0,0,.4)}
+.r-sm .knob svg{width:24px;height:24px}
+.r-sm.on .knob svg{fill:var(--gold)}
+.r-md{width:96px;height:96px}.r-md .knob{width:66px;height:66px}.r-md svg{width:22px;height:22px}
+.r-lg{width:132px;height:132px}.r-lg .knob{width:94px;height:94px}.r-lg svg{width:34px;height:34px}
+.r-lg.wait .knob::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:2px solid transparent;border-top-color:var(--gold);animation:spin 1s linear infinite}
+
+/* docked player */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:30;padding-bottom:max(14px,env(safe-area-inset-bottom,0px));padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));pointer-events:none}
+.player{pointer-events:auto;max-width:780px;margin:0 auto;background:var(--panel);border-radius:26px;padding:16px;display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;user-select:none;
+  box-shadow:0 0 0 1px var(--edge),0 18px 40px rgba(0,0,0,.45)}
+.player .cover-wrap{width:170px;cursor:pointer;border-radius:4px}
+.player .meta{cursor:pointer}
+.player .pmain{min-width:0;display:flex;flex-direction:column;gap:10px}
+.player .r-lg{width:112px;height:112px}.player .r-lg .knob{width:80px;height:80px}.player .r-lg svg{width:30px;height:30px}
+.player .r-md{width:82px;height:82px}.player .r-md .knob{width:56px;height:56px}
+.player .r-sm .knob{width:42px;height:42px}
+.mini{display:none}
+@media (max-height:700px) and (min-width:641px){
+  .player .cover-wrap{width:130px}.player{padding:12px}
+  .player .meta .a{font-size:20px}.player .meta .t{font-size:17px}
+  .player .r-lg{width:92px;height:92px}.player .r-lg .knob{width:66px;height:66px}
+  .player .r-md{width:68px;height:68px}.player .r-md .knob{width:48px;height:48px}
+}
+
+/* phone: compact mini player */
+@media (max-width:640px){
+  .player{grid-template-columns:56px minmax(0,1fr) auto;gap:12px;padding:10px 10px 10px 10px;border-radius:20px}
+  .player .cover-wrap{width:56px}
+  .player .pmain{display:contents}
+  .player .meta{text-align:left}
+  .player .meta .a{font-size:16px}.player .meta .t{font-size:13px;color:var(--muted)}.player .meta .tm{display:none}
+  .player .groove,.player .controls{display:none}
+  .player .mini{display:flex;gap:8px;align-items:center}
+  .mini .knob{width:46px;height:46px}.mini .knob svg{width:18px;height:18px}
+  .mini .knob.sm{width:38px;height:38px;background:radial-gradient(circle at 50% 35%,var(--ring-a),var(--ring-b));box-shadow:inset 0 2px 4px rgba(0,0,0,.4)}
+  .mini .knob.sm svg{width:16px;height:16px}
+  .player .vinyl{display:none}
+  .brand span{display:none}
+  .tools .hide-sm{display:none}
+  .grid{gap:10px;grid-template-columns:repeat(var(--cols,auto-fill),minmax(130px,1fr))}
+}
+
+/* full-screen player */
+.full{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;gap:12px;overflow:hidden;overscroll-behavior:contain;user-select:none;touch-action:pan-x;
+  padding:max(14px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(18px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  background:linear-gradient(160deg,var(--stage-a),var(--stage-b));animation:rise .32s cubic-bezier(.2,.8,.2,1);transition:transform .2s}
+@keyframes rise{from{transform:translateY(48px);opacity:0}}
+.fbg{position:absolute;inset:-15%;background-size:cover;background-position:center;filter:blur(60px) saturate(1.4);opacity:.35;pointer-events:none}
+.ftop{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.flbl{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--on-stage);opacity:.85;font-weight:700;text-align:center;font-variant-numeric:tabular-nums}
+.fgrip{position:absolute;left:50%;top:-6px;width:44px;height:4px;border-radius:4px;background:var(--on-stage);opacity:.35;transform:translateX(-50%)}
+.fbody{position:relative;flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(18px,4vh,44px)}
+.full .cover-wrap{width:min(68vw,40vh);transform:translateX(-9%)}
+.fside{width:100%;max-width:560px;background:var(--panel);border-radius:26px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 0 0 1px var(--edge),0 18px 40px rgba(0,0,0,.4)}
+.fextra{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+.fextra .tbtn{box-shadow:none;background:var(--panel-2);width:44px;height:44px}
+@media (min-aspect-ratio:5/4) and (min-width:700px){
+  .fbody{flex-direction:row;gap:7vw}
+  .full .cover-wrap{width:min(36vw,58vh)}
+  .fside{max-width:540px}
+}
+@media (max-width:640px){
+  .full .r-lg{width:23vw;height:23vw}.full .r-lg .knob{width:17vw;height:17vw}.full .r-lg svg{width:7vw;height:7vw}
+  .full .r-md{width:16.5vw;height:16.5vw}.full .r-md .knob{width:12vw;height:12vw}.full .r-md svg{width:5vw;height:5vw}
+  .full .r-sm .knob{width:10.5vw;height:10.5vw}.full .r-sm svg{width:5vw;height:5vw}
+  .full .controls{gap:2px;justify-content:space-between}
+  .fside{padding:16px 14px}
+  .full .meta .a{font-size:22px}.full .meta .t{font-size:17px}
+}
+@media (max-height:520px){
+  .full .meta .tm,.flbl{display:none}
+  .fside{padding:12px 16px;gap:8px}
+  .full .r-lg{width:84px;height:84px}.full .r-lg .knob{width:62px;height:62px}
+  .full .r-md{width:62px;height:62px}.full .r-md .knob{width:44px;height:44px}
+  .full .r-sm .knob{width:38px;height:38px}
+  .fextra .tbtn{width:38px;height:38px}
+  .full .cover-wrap{width:min(36vw,70vh)}
+}
+
+/* Android TV / 10-foot */
+html.tv body{font-size:18px}
+.tv .wrap{max-width:none;padding-left:max(48px,env(safe-area-inset-left,0px));padding-right:max(48px,env(safe-area-inset-right,0px))}
+.tv header{padding-block:28px 14px;backdrop-filter:none;background:var(--stage-a)}
+.tv .brand{font-size:24px}.tv .brand .dot{width:40px;height:40px}
+.tv .search{height:54px}.tv .search input{font-size:18px}
+.tv .tbtn{width:54px;height:54px}.tv .tbtn svg{width:26px;height:26px}
+.tv .sleepchip{height:54px;font-size:18px}
+.tv .tabs{gap:12px;margin-top:18px;padding:6px}
+.tv .chip{height:46px;padding:0 22px;font-size:17px}
+.tv .grid{gap:24px;grid-template-columns:repeat(var(--cols,auto-fill),minmax(210px,1fr))}
+.tv .card{padding:14px;scroll-margin:200px 0 calc(var(--dockh,240px) + 30px)}
+.tv .card .nm{font-size:18px}.tv .card .sub{font-size:14px}
+.tv .card .more{display:none}
+.tv .card:focus{outline:none;transform:scale(1.07);background:var(--panel-2);box-shadow:0 0 0 4px var(--gold),0 14px 34px rgba(0,0,0,.55);z-index:3}
+.tv button:focus,.tv input:focus,.tv select:focus{outline:3px solid var(--gold);outline-offset:3px}
+.tv .knob:focus,.tv .r-sm:focus .knob{outline:none;box-shadow:0 0 0 4px var(--gold),0 4px 10px var(--shadow);transform:scale(1.06)}
+.tv .r-sm:focus{outline:none}
+.tv .chip:focus{outline-offset:2px}
+.tv .player{max-width:1100px;padding:18px}
+.tv .player .cover-wrap{width:150px}
+.tv .player .meta .a{font-size:28px}.tv .player .meta .t{font-size:22px}
+.tv .dock{padding-bottom:28px;padding-left:48px;padding-right:48px}
+.tv .full{padding:36px 64px}
+.tv .full .meta .a{font-size:38px}.tv .full .meta .t{font-size:27px}.tv .full .meta .tm{font-size:20px}
+.tv .fside{max-width:660px;padding:30px}
+.tv .fextra .tbtn{width:58px;height:58px}
+.tv .flbl{font-size:16px}
+.tv .menu button{padding:14px 16px;font-size:18px}
+.tv dialog{width:min(640px,calc(100vw - 96px))}
+.tv .dlg h2{font-size:26px}.tv .btn{height:52px;font-size:17px}
+.tv .times button{height:66px;font-size:20px}
+
+/* popovers, dialogs, toast */
+.menu{position:fixed;z-index:60;background:var(--panel-2);border-radius:14px;padding:6px;min-width:230px;box-shadow:0 12px 30px rgba(0,0,0,.45),0 0 0 1px var(--edge)}
+.menu button{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border-radius:9px;text-align:left;font-weight:500}
+.menu button:hover,.menu button:focus{background:var(--panel-hi)}
+.menu svg{fill:var(--muted);width:18px;height:18px;flex:none}
+.menu .danger{color:#ff8a80}.menu .danger svg{fill:#ff8a80}
+dialog{border:0;padding:0;background:var(--panel);color:var(--ink);border-radius:22px;width:min(440px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+dialog::backdrop{background:rgba(5,20,30,.55);backdrop-filter:blur(3px)}
+.dlg{padding:22px;display:flex;flex-direction:column;gap:16px}
+.dlg h2{margin:0;font-size:19px;font-weight:700;text-wrap:balance}
+.dlg p{margin:0;color:var(--muted);line-height:1.5}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.field input,.field select{height:44px;border-radius:12px;border:0;background:var(--groove);color:var(--ink);padding:0 14px;font:inherit}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:4px 0}
+.row .lbl{display:flex;flex-direction:column;gap:2px;min-width:0}
+.row .lbl small{color:var(--muted);font-size:12px}
+.sw{position:relative;width:46px;height:26px;flex:none}
+.sw input{opacity:0;position:absolute;inset:0;margin:0;cursor:pointer}
+.sw span{position:absolute;inset:0;border-radius:99px;background:var(--groove);transition:.2s;pointer-events:none}
+.sw span::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--knob-a);box-shadow:0 1px 3px rgba(0,0,0,.5);transition:.2s}
+.sw input:checked+span{background:var(--gold)}
+.sw input:checked+span::after{left:23px}
+.sw input:focus-visible+span,.tv .sw input:focus+span{box-shadow:0 0 0 3px var(--gold)}
+.seg{display:flex;background:var(--groove);border-radius:12px;padding:3px;gap:2px}
+.seg button{flex:1;height:34px;border-radius:9px;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--panel-hi);color:var(--ink)}
+.acts{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.btn{height:40px;padding:0 18px;border-radius:999px;font-weight:700;background:var(--panel-hi)}
+.btn.pri{background:var(--gold);color:var(--gold-ink)}
+.times{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.times button{height:52px;border-radius:14px;background:var(--groove);font-weight:700;font-size:16px;font-variant-numeric:tabular-nums}
+.times button small{display:block;font-size:11px;font-weight:500;color:var(--muted)}
+.hr{height:1px;background:var(--edge)}
+dialog.fallback{position:fixed;inset:0;margin:auto;z-index:95;height:fit-content}
+.dlg-shade{position:fixed;inset:0;z-index:94;background:rgba(5,20,30,.55)}
+.about{font-size:13px;color:var(--muted);line-height:1.6}
+.about b{color:var(--ink);font-weight:600}
+.about code{color:var(--ink);background:var(--groove);padding:1px 6px;border-radius:5px;font-size:12px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--dockh,240px) + 14px);z-index:90;background:var(--panel-2);color:var(--ink);padding:11px 18px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.4);font-weight:600;max-width:calc(100vw - 32px);text-align:center;transition:opacity .25s,translate .25s}
+html.full-open .toast{bottom:max(24px,env(safe-area-inset-bottom,0px))}
+.toast.out{opacity:0;translate:0 8px;pointer-events:none}
+
+/* clock mode */
+.clock{position:fixed;inset:0;z-index:80;background:#05090c;color:var(--gold);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;cursor:pointer;padding:24px}
+.clock .hm{font-family:var(--font-led);font-weight:700;font-size:clamp(64px,19vw,240px);letter-spacing:.04em;font-variant-numeric:tabular-nums;text-shadow:0 0 24px color-mix(in srgb,var(--gold) 45%,transparent);line-height:1}
+.clock .hm .c{animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:.15}}
+.clock .dt{font-family:var(--font-led);font-size:clamp(14px,2.6vw,24px);color:#8b8f96;letter-spacing:.12em;text-transform:uppercase}
+.clock .st{color:#c9ced6;font-size:clamp(14px,2vw,18px);font-weight:600;text-align:center}
+.clock .hint{position:absolute;bottom:max(18px,env(safe-area-inset-bottom,0px));color:#555b63;font-size:12px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="5.5" y="4" width="4.5" height="16" rx="1.2"/><rect x="14" y="4" width="4.5" height="16" rx="1.2"/></symbol>
+  <symbol id="i-prev" viewBox="0 0 24 24"><path d="M11.5 6.2v11.6a.8.8 0 0 1-1.25.66L2 12.66a.8.8 0 0 1 0-1.32l8.25-5.8a.8.8 0 0 1 1.25.66zm10 0v11.6a.8.8 0 0 1-1.25.66L12 12.66a.8.8 0 0 1 0-1.32l8.250-5.8a.8.8 0 0 1 1.25.66z"/></symbol>
+  <symbol id="i-next" viewBox="0 0 24 24"><path d="M12.5 6.2v11.6a.8.8 0 0 0 1.25.66L22 12.66a.8.8 0 0 0 0-1.32l-8.25-5.8a.8.8 0 0 0-1.25.66zm-10 0v11.6a.8.8 0 0 0 1.25.66L12 12.66a.8.8 0 0 0 0-1.32L3.75 5.54A.8.8 0 0 0 2.5 6.2z"/></symbol>
+  <symbol id="i-repeat" viewBox="0 0 24 24"><path d="M12 4a8 8 0 0 1 7.4 5H22l-3.5 4.5L15 9h2.2A6 6 0 1 0 18 13.5h2.05A8 8 0 1 1 12 4z"/></symbol>
+  <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M17 3.5 21.5 7 17 10.5V8.2h-1.7a3 3 0 0 0-2.4 1.2L8.5 15.6A5 5 0 0 1 4.6 17.6H2.5v-2.2h2.1a3 3 0 0 0 2.4-1.2l4.4-6.2a5 5 0 0 1 3.9-2H17zM2.5 6.4h2.1a5 5 0 0 1 3.9 2l.9 1.3-1.3 1.9-1.3-1.9a3 3 0 0 0-2.4-1.1H2.5zm11.6 7.8 1.3-1.9.4.5a3 3 0 0 0 2.4 1.2H17v-2.3l4.5 3.5L17 18.7v-2.3h-1.2a5 5 0 0 1-3.9-2z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><path d="M10.5 3a7.5 7.5 0 0 1 6 12l4.3 4.3-1.5 1.5-4.3-4.3A7.5 7.5 0 1 1 10.5 3zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11z"/></symbol>
+  <symbol id="i-timer" viewBox="0 0 24 24"><path d="M14.5 2.5a9.5 9.5 0 1 0 7 15.9A8 8 0 0 1 14.5 2.5z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm0 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm1 3v4.6l3.4 2-1 1.7L11 12.7V7z"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><path d="m13.8 2 .5 2.6a7.8 7.8 0 0 1 1.9 1.1l2.5-.9 1.8 3.1-2 1.7a8 8 0 0 1 0 2.2l2 1.7-1.8 3.1-2.5-.9a7.8 7.8 0 0 1-1.9 1.1l-.5 2.6h-3.6l-.5-2.6a7.8 7.8 0 0 1-1.9-1.1l-2.5.9-1.8-3.1 2-1.7a8 8 0 0 1 0-2.2l-2-1.7 1.8-3.1 2.5.9a7.8 7.8 0 0 1 1.9-1.1l.5-2.6zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7z"/></symbol>
+  <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20.5 10.6 19C5.4 14.4 2 11.3 2 7.6 2 4.6 4.4 2.3 7.3 2.3c1.7 0 3.4.8 4.7 2.1a6.4 6.4 0 0 1 4.7-2.1c2.9 0 5.3 2.3 5.3 5.3 0 3.7-3.4 6.8-8.6 11.4z"/></symbol>
+  <symbol id="i-heart-o" viewBox="0 0 24 24"><path d="M16.7 2.3c2.9 0 5.3 2.3 5.3 5.3 0 3.7-3.4 6.8-8.6 11.4L12 20.5 10.6 19C5.4 14.4 2 11.3 2 7.6 2 4.6 4.4 2.3 7.3 2.3c1.7 0 3.4.8 4.7 2.1a6.4 6.4 0 0 1 4.7-2.1zM12 18l.1-.1C17 13.6 20 10.9 20 7.6c0-1.9-1.4-3.3-3.3-3.3-1.4 0-2.800.9-3.3 2.2h-2.8C10.1 5.2 8.7 4.3 7.3 4.3 5.4 4.3 4 5.7 4 7.6c0 3.3 3 6 7.9 10.3z"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><path d="M8 3h11a2 2 0 0 1 2 2v12h-2V5H8zM5 7h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2zm0 2v10h10V9z"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10.6 13.4a1 1 0 0 1 0-1.4l3.5-3.5a1 1 0 1 1 1.4 1.4L12 13.4a1 1 0 0 1-1.4 0zM8 21a5 5 0 0 1-3.5-8.5l2.8-2.8 1.4 1.4-2.8 2.8a3 3 0 1 0 4.2 4.2l2.8-2.8 1.4 1.4-2.8 2.8A5 5 0 0 1 8 21zm9.3-7.3-1.4-1.4 2.8-2.8a3 3 0 1 0-4.2-4.2l-2.8 2.8-1.4-1.4 2.8-2.8a5 5 0 1 1 7 7z"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M3 17.3V21h3.7l11-11-3.7-3.7zM20.7 7a1 1 0 0 0 0-1.4l-2.3-2.3a1 1 0 0 0-1.4 0l-1.8 1.8 3.7 3.7z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4zM6 8h12l-1 13H7z"/></symbol>
+  <symbol id="i-vol" viewBox="0 0 24 24"><path d="M3 9h4l5-4v14l-5-4H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M5.6 8.3 12 14.7l6.4-6.4 1.4 1.4L12 17.5 4.2 9.7z"/></symbol>
+  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 4h6v2H6v4H4zm10 0h6v6h-2V6h-4zM4 14h2v4h4v2H4zm14 0h2v6h-6v-2h4z"/></symbol>
+  <symbol id="i-shrink" viewBox="0 0 24 24"><path d="M8 4h2v6H4V8h4zm6 0h2v4h4v2h-6zM4 14h6v6H8v-4H4zm10 0h6v2h-4v4h-2z"/></symbol>
+</svg>
+
+<header>
+  <div class="wrap">
+    <div class="bar">
+      <div class="brand"><div class="dot"><i></i></div><span>RadioNet</span></div>
+      <label class="search" id="searchBox"><svg width="18" height="18"><use href="#i-search"/></svg><input id="q" type="search" placeholder="Название станции" autocomplete="off" enterkeyhint="search"></label>
+      <div class="tools">
+        <button class="sleepchip" id="sleepChip" data-act="sleep" hidden title="Таймер выключения"><svg><use href="#i-timer"/></svg><span data-b="sleepleft">0:00</span></button>
+        <button class="tbtn" id="bSleep" data-act="sleep" title="Таймер выключения"><svg><use href="#i-timer"/></svg></button>
+        <button class="tbtn hide-sm" data-act="clock" title="Часы (C)"><svg><use href="#i-clock"/></svg></button>
+        <button class="tbtn" id="bAdd" title="Добавить станцию"><svg><use href="#i-plus"/></svg></button>
+        <button class="tbtn" id="bSettings" title="Настройки"><svg><use href="#i-gear"/></svg></button>
+      </div>
+    </div>
+    <div class="tabs" id="tabs"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="status" id="status">Загружаю радиостанции…</div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<div class="dock" id="dock">
+  <section class="player pstate paused" id="player" aria-label="Радиоплеер">
+    <div class="cover-wrap" data-act="full" role="button" tabindex="0" title="Открыть плеер на весь экран (F)" aria-label="Открыть плеер на весь экран"><div class="vinyl"></div><div class="cover" data-b="cover"><span class="ini bi">RADIO<b>·</b>NET</span></div></div>
+    <div class="pmain">
+      <div class="meta" data-act="full">
+        <div class="a" data-b="station">RadioNet</div>
+        <div class="t" data-b="info">Выберите радиостанцию</div>
+        <div class="tm" data-b="time">[0:00]</div>
+      </div>
+      <div class="groove"><svg><use href="#i-vol"/></svg><input type="range" class="volr" id="vol" min="0" max="100" value="80" aria-label="Громкость"></div>
+      <div class="controls">
+        <button class="r-sm on" data-act="repeat" title="Переподключаться при обрыве"><span class="knob"><svg><use href="#i-repeat"/></svg></span></button>
+        <div class="ring r-md"><button class="knob" data-act="prev" title="Предыдущая"><svg><use href="#i-prev"/></svg></button></div>
+        <div class="ring r-lg" data-b="playring"><button class="knob" data-act="play" data-b="playbtn" title="Старт"><svg data-b="playico"><use href="#i-play"/></svg></button></div>
+        <div class="ring r-md"><button class="knob" data-act="next" title="Следующая"><svg><use href="#i-next"/></svg></button></div>
+        <button class="r-sm" data-act="shuffle" title="Случайная станция"><span class="knob"><svg><use href="#i-shuffle"/></svg></span></button>
+      </div>
+    </div>
+    <div class="mini">
+      <button class="knob" data-act="play" data-b="playbtn" title="Старт"><svg data-b="playico"><use href="#i-play"/></svg></button>
+      <button class="knob sm" data-act="next" title="Следующая"><svg><use href="#i-next"/></svg></button>
+    </div>
+  </section>
+</div>
+
+<div class="full pstate paused" id="full" hidden role="dialog" aria-modal="true" aria-label="Плеер">
+  <div class="fbg" data-b="bg"></div>
+  <div class="ftop">
+    <span class="fgrip"></span>
+    <button class="tbtn" data-act="close" title="Свернуть (Esc)"><svg><use href="#i-down"/></svg></button>
+    <div class="flbl" data-b="flabel">Сейчас в эфире</div>
+    <button class="tbtn" data-act="menu" title="Меню станции"><svg><use href="#i-dots"/></svg></button>
+  </div>
+  <div class="fbody">
+    <div class="cover-wrap"><div class="vinyl"></div><div class="cover" data-b="cover"><span class="ini bi">RADIO<b>·</b>NET</span></div></div>
+    <div class="fside">
+      <div class="meta">
+        <div class="a" data-b="station">RadioNet</div>
+        <div class="t" data-b="info">Выберите радиостанцию</div>
+        <div class="tm" data-b="time">[0:00]</div>
+      </div>
+      <div class="groove"><svg><use href="#i-vol"/></svg><input type="range" class="volr" id="vol2" min="0" max="100" value="80" aria-label="Громкость"></div>
+      <div class="controls">
+        <button class="r-sm on" data-act="repeat" title="Переподключаться при обрыве"><span class="knob"><svg><use href="#i-repeat"/></svg></span></button>
+        <div class="ring r-md"><button class="knob" data-act="prev" title="Предыдущая"><svg><use href="#i-prev"/></svg></button></div>
+        <div class="ring r-lg" data-b="playring"><button class="knob" data-act="play" data-b="playbtn" title="Старт" id="fPlay"><svg data-b="playico"><use href="#i-play"/></svg></button></div>
+        <div class="ring r-md"><button class="knob" data-act="next" title="Следующая"><svg><use href="#i-next"/></svg></button></div>
+        <button class="r-sm" data-act="shuffle" title="Случайная станция"><span class="knob"><svg><use href="#i-shuffle"/></svg></span></button>
+      </div>
+      <div class="fextra">
+        <button class="tbtn" data-act="fav" data-b="favbtn" title="Добавить в избранные"><svg data-b="favico"><use href="#i-heart-o"/></svg></button>
+        <button class="tbtn" data-act="sleep" data-b="sleepbtn" title="Таймер выключения"><svg><use href="#i-timer"/></svg></button>
+        <button class="tbtn" data-act="clock" title="Часы"><svg><use href="#i-clock"/></svg></button>
+        <button class="tbtn" data-act="fs" data-b="fsbtn" title="Во весь экран"><svg data-b="fsico"><use href="#i-expand"/></svg></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast out" id="toast" role="status"></div>
+<div class="menu" id="menu" hidden></div>
+
+<dialog id="dSleep"><form class="dlg" action="javascript:void(0)">
+  <h2>Таймер выключения</h2>
+  <p>Радио плавно затихнет и остановится через выбранное время.</p>
+  <div class="times" id="sleepTimes"></div>
+  <div class="acts"><button class="btn" id="sleepOff" type="button" hidden>Отключить таймер</button><button class="btn" type="button" data-close>Отмена</button></div>
+</form></dialog>
+
+<dialog id="dStation"><form class="dlg" id="fStation" action="javascript:void(0)">
+  <h2 id="dStationTitle">Добавить станцию</h2>
+  <div class="field"><label for="sName">Название</label><input id="sName" required placeholder="Моё радио"></div>
+  <div class="field"><label for="sUrl">Ссылка на поток</label><input id="sUrl" required type="url" placeholder="https://example.com/stream.mp3"></div>
+  <div class="field"><label for="sLogo">Логотип (необязательно)</label><input id="sLogo" type="url" placeholder="https://example.com/logo.png"></div>
+  <p style="font-size:12px">Добавление новой станции может заметно увеличить расход трафика.</p>
+  <div class="acts"><button class="btn" type="button" id="sCancel">Отмена</button><button class="btn pri" id="sSave">Добавить</button></div>
+</form></dialog>
+
+<dialog id="dSettings"><form class="dlg" action="javascript:void(0)">
+  <h2>Настройки</h2>
+  <div class="row"><div class="lbl">Тёмная тема</div><label class="sw"><input type="checkbox" id="stDark"><span></span></label></div>
+  <div class="row"><div class="lbl">Строка поиска<small>Отображать строку поиска на главном экране</small></div><label class="sw"><input type="checkbox" id="stSearch"><span></span></label></div>
+  <div class="row"><div class="lbl">Автовоспроизведение<small>Включать последнюю станцию при запуске</small></div><label class="sw"><input type="checkbox" id="stAuto"><span></span></label></div>
+  <div class="field"><label for="stSource">Каталог станций</label><select id="stSource">
+    <option value="fmplay">FMPLAY (как в приложении)</option><option value="rb">Radio Browser (открытый каталог)</option>
+  </select><small id="srcNote" style="color:var(--muted);font-size:12px"></small></div>
+  <div class="row"><div class="lbl">Логотипы станций</div><label class="sw"><input type="checkbox" id="stLogos"><span></span></label></div>
+  <div class="row"><div class="lbl">Что сейчас играет<small>Исполнитель и название трека (каталог FMPLAY)</small></div><label class="sw"><input type="checkbox" id="stNow"><span></span></label></div>
+  <div class="row"><div class="lbl">Обложки альбомов<small>Загружать обложки (увеличивает расход трафика)</small></div><label class="sw"><input type="checkbox" id="stCovers"><span></span></label></div>
+  <div class="row"><div class="lbl">Плеер на весь экран<small>Открывать при выборе станции</small></div><label class="sw"><input type="checkbox" id="stAutoFull"><span></span></label></div>
+  <div class="field"><label>Режим Android TV</label><div class="seg" id="stTv"></div></div>
+  <div class="field"><label>Количество колонок</label><div class="seg" id="stCols"></div></div>
+  <div class="field"><label for="stCountry">Страна</label><select id="stCountry">
+    <option value="RU">Россия</option><option value="BY">Беларусь</option><option value="UA">Украина</option><option value="KZ">Казахстан</option><option value="">Весь мир</option>
+  </select></div>
+  <div class="hr"></div>
+  <div class="row"><div class="lbl">Импорт радиостанций<small>Из txt («Название | ссылка | логотип» на строку), m3u, JSON-каталога или базы приложения FMPLAY (.db)</small></div><button class="btn" type="button" id="stImport">Импорт</button></div>
+  <div class="row"><div class="lbl">Экспорт радиостанций<small>Сохранить свои и избранные станции в txt-файл</small></div><button class="btn" type="button" id="stExport">Экспорт</button></div>
+  <input type="file" id="importFile" accept=".txt,.m3u,.m3u8,.json,.db,.sqlite,text/plain,application/json,application/octet-stream" hidden>
+  <div class="hr"></div>
+  <div class="about" id="about"></div>
+  <div class="acts"><button class="btn" type="button" id="stClock">Режим часов</button><button class="btn pri" type="button" data-close>Готово</button></div>
+</form></dialog>
+
+<div class="clock" id="clock" hidden>
+  <div class="hm" id="cHM">00<span class="c">:</span>00</div>
+  <div class="dt" id="cDate"></div>
+  <div class="st" id="cSt"></div>
+  <div class="hint" id="cHint">Нажмите, чтобы выйти</div>
+</div>
+
+<audio id="audio" preload="none"></audio>
+
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+const audio = $('audio');
+const root = document.documentElement;
+const KEY = 'radionet-v1';
+const MIRRORS = ['https://de1.api.radio-browser.info','https://fi1.api.radio-browser.info','https://de2.api.radio-browser.info','https://all.api.radio-browser.info'];
+const GENRE_WORDS = { pop:['pop','поп','хит','hit'], rock:['rock','рок'], dance:['dance','танц','club','клуб','house'], electronic:['electro','электрон','trance','techno','edm'], '80s':['80','90','ретро','retro','disco','диско'], chanson:['шансон','chanson'], jazz:['jazz','джаз','blues','блюз'], classical:['classic','классик','орфей'], news:['news','новост','вести','business','бизнес'], talk:['talk','разговор','юмор','humor','комеди','детск'] };
+const GENRES = [['', 'Все жанры'],['pop','Поп'],['rock','Рок'],['dance','Танцевальная'],['electronic','Электроника'],['80s','80-е'],['chanson','Шансон'],['jazz','Джаз'],['classical','Классика'],['news','Новости'],['talk','Разговорное']];
+const TV_UA = /Android.*\b(TV|AFT\w*|BRAVIA|GoogleTV|SHIELD|MiBOX|AndroidTV)\b|SmartTV|SMART-TV|Tizen|Web0S|webOS|HbbTV|CrKey|Large Screen/i.test(navigator.userAgent);
+
+const S = {
+  stations: [], custom: [], favs: {}, view: [],
+  tab: 'all', tag: '', q: '',
+  cur: null, wantPlay: false, retries: 0, shuffle: false, repeat: true,
+  started: 0, acc: 0, sleepEnd: 0,
+  set: { dark: true, search: true, auto: false, logos: true, cols: 'auto', country: 'RU', vol: 80, tv: 'auto', autoFull: false, source: 'fmplay', nowPlaying: true, covers: true },
+  np: {}, srcActive: null,
+};
+const APP = !!(window.Android && window.Android.isApp);
+const APP_TV = (() => { try { return !!(window.Android && window.Android.isTv && window.Android.isTv()); } catch(e){ return false; } })();
+const isTV = () => S.set.tv === 'on' || (S.set.tv === 'auto' && (TV_UA || APP_TV));
+
+/* storage */
+function load(){ try{ const d = JSON.parse(localStorage.getItem(KEY) || '{}');
+  if (d.set) Object.assign(S.set, d.set); if (d.custom) S.custom = d.custom; if (d.favs) S.favs = d.favs;
+  if (typeof d.shuffle === 'boolean') S.shuffle = d.shuffle; if (typeof d.repeat === 'boolean') S.repeat = d.repeat;
+  S.last = d.last || null; }catch(e){} }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify({ set:S.set, custom:S.custom, favs:S.favs, shuffle:S.shuffle, repeat:S.repeat, last:S.cur })); }catch(e){} }
+
+/* helpers */
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function initials(name){ const w = String(name).replace(/[^\p{L}\p{N} ]/gu,' ').trim().split(/\s+/).filter(Boolean);
+  return (w.length > 1 ? w[0][0] + w[1][0] : (w[0] || 'FM').slice(0,2)).toUpperCase(); }
+function fmt(sec){ sec = Math.max(0, Math.floor(sec)); const h = Math.floor(sec/3600), m = Math.floor(sec%3600/60), s = sec%60;
+  return h ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}` : `${m}:${String(s).padStart(2,'0')}`; }
+function subline(st){ const parts = []; if (st.tags) parts.push(st.tags.split(',').slice(0,2).join(', '));
+  if (st.bitrate) parts.push(st.bitrate + ' Кбит/с'); if (st.custom) parts.push('Своя станция'); return parts.join(' · ') || 'Прямой эфир'; }
+const setText = (k, v) => $$(`[data-b="${k}"]`).forEach(e => { if (e.textContent !== v) e.textContent = v; });
+const setIco = (k, ico) => $$(`[data-b="${k}"]`).forEach(e => e.innerHTML = `<use href="#i-${ico}"/>`);
+let toastT;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.remove('out'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.add('out'), 2600); }
+async function copy(text, done='Скопировано'){ try{ await navigator.clipboard.writeText(text); toast(done); }
+  catch(e){ const i = document.createElement('textarea'); i.value = text; document.body.appendChild(i); i.select();
+    try{ document.execCommand('copy'); toast(done); }catch(_){ toast(text); } i.remove(); } }
+
+/* catalogue */
+/* FMPLAY catalogue: loaded in the viewer's browser; field names are matched loosely */
+const FM_CATALOG = ['https://api.fmplay.ru/stations_mobile.json', 'https://fmplay.ru/stations_mobile.json'];
+const FM_CURRENT = ['https://api.fmplay.ru/fmplay_current.json', 'https://fmplay.ru/fmplay_current.json'];
+const pick = (o, keys) => { for (const k of keys) { const v = o?.[k]; if (v !== undefined && v !== null && v !== '') return v; } };
+const absUrl = (v, base) => { if (typeof v !== 'string' || !v) return ''; try { return new URL(v, base).href; } catch(e){ return ''; } };
+function pickStream(o, base){
+  const pref = 48;
+  const q = [['url_high', 48], ['url', 32], ['url_low', 24], ['url_extra_low', 16]].filter(([k]) => typeof o[k] === 'string' && o[k]);
+  if (q.length) { const want = S.set.quality || 48; q.sort((a, b) => Math.abs(a[1] - want) - Math.abs(b[1] - want)); return { url: absUrl(q[0][0] && o[q[0][0]], base), bitrate: q[0][1] }; }
+  const direct = pick(o, ['url','stream','streamurl','stream_url','streamUrl','src','link','aac','mp3','hls']);
+  if (typeof direct === 'string') return { url: absUrl(direct, base), bitrate: +pick(o, ['bitrate','br']) || 0 };
+  const streams = pick(o, ['streams','urls','sources','bitrates','stream_urls']) || (direct && typeof direct === 'object' ? direct : null);
+  let list = [];
+  if (Array.isArray(streams)) list = streams.map(s => typeof s === 'string' ? { url: s, bitrate: 0 } : { url: pick(s, ['url','stream','src','link']), bitrate: +pick(s, ['bitrate','br','kbps']) || 0 });
+  else if (streams && typeof streams === 'object') list = Object.entries(streams).map(([k, v]) => typeof v === 'string' ? { url: v, bitrate: parseInt(k) || 0 } : { url: pick(v, ['url','stream','src']), bitrate: +pick(v, ['bitrate','br']) || parseInt(k) || 0 });
+  list = list.filter(s => typeof s.url === 'string' && s.url);
+  if (!list.length) { for (const v of Object.values(o)) if (typeof v === 'string' && /^https?:\/\/.+(stream|live|icecast|:\d{4}|\.aac|\.mp3|\.ogg|\/;)/i.test(v) && !/\.(png|jpe?g|webp|svg|gif)(\?|$)/i.test(v)) return { url: v, bitrate: 0 }; return null; }
+  list.sort((a, b) => Math.abs((a.bitrate || pref) - pref) - Math.abs((b.bitrate || pref) - pref) || b.bitrate - a.bitrate);
+  return { url: absUrl(list[0].url, base), bitrate: list[0].bitrate };
+}
+function parseNow(v, base){
+  if (!v || typeof v !== 'object') return null;
+  const artist = pick(v, ['artist','performer','singer','author']), title = pick(v, ['title','song','track','name_song']);
+  if (!artist && !title) return null;
+  const cv = pick(v, ['cover_webp','cover','image','picture','artwork','img']);
+  const cover = typeof cv === 'string' ? absUrl(cv, base) : (cv && typeof cv === 'object' ? absUrl(pick(cv, ['big','large','medium','url','src']), base) : '');
+  return { artist: String(artist || '').trim(), title: String(title || '').trim(), cover };
+}
+function findArray(j){
+  if (Array.isArray(j)) return j;
+  if (j && typeof j === 'object') { for (const k of ['stations','data','items','list','result','channels']) if (Array.isArray(j[k])) return j[k];
+    for (const v of Object.values(j)) { if (Array.isArray(v) && v.length && typeof v[0] === 'object') return v; if (v && typeof v === 'object') { const a = findArray(v); if (a) return a; } }
+    const vals = Object.entries(j).filter(([, v]) => v && typeof v === 'object' && !Array.isArray(v));
+    if (vals.length > 3) return vals.map(([k, v]) => ({ id: k, ...v }));
+  }
+  return null;
+}
+function parseCatalog(j, base){
+  const arr = findArray(j) || [];
+  const out = [], seen = new Set();
+  for (const o of arr){
+    if (!o || typeof o !== 'object') continue;
+    const name = pick(o, ['name','title','station','caption','label']); const s = pickStream(o, base);
+    if (!name || !s || !s.url || seen.has(s.url)) continue;
+    seen.add(s.url);
+    const lg = pick(o, S.set.dark ? ['logo-d_webp','logo_d','logo-d','logo_webp','logo','image','icon','favicon','picture','img'] : ['logo_webp','logo','logo_d','logo-d','image','icon','favicon','picture','img']);
+    const g = pick(o, ['genre','genres','tags','tag','category','categories','style']);
+    out.push({ id: 'fm-' + String(pick(o, ['key','id','uid','code','alias','slug']) ?? name), name: String(name).trim(), url: s.url, bitrate: s.bitrate || 0,
+      logo: typeof lg === 'string' ? absUrl(lg, base) : (lg && typeof lg === 'object' ? absUrl(pick(lg, ['big','large','medium','url','src']), base) : ''),
+      tags: Array.isArray(g) ? g.map(x => typeof x === 'string' ? x : pick(x, ['name','title'])).filter(Boolean).join(',') : (typeof g === 'string' ? g : ''),
+      fmKey: String(pick(o, ['key','id','uid','code','alias','slug']) ?? ''), meta: pick(o, ['meta']) || '', order: +pick(o, ['sort','position']) || 0, fav: !!o.is_favorite, now: parseNow(pick(o, ['current','now','nowplaying','now_playing','track']), base) });
+  }
+  if (out.some(s => s.order)) out.sort((a, b) => a.order - b.order);
+  return out;
+}
+async function getJSON(urls, ms = 9000){
+  for (const u of urls){ try { const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), ms);
+    const r = await fetch(u, { signal: ctl.signal, cache: 'no-store' }); clearTimeout(to); if (r.ok) return { json: await r.json(), url: u }; } catch(e){} }
+  return null;
+}
+async function loadFmplay(){
+  const got = await getJSON(FM_CATALOG); if (!got) return false;
+  const list = parseCatalog(got.json, got.url); if (!list.length) return false;
+  S.stations = list; S.srcActive = 'fmplay';
+  S.np = {}; list.forEach(s => { if (s.now) S.np[s.id] = s.now; });
+  pollNow(); return true;
+}
+/* now playing for every station (artist, title, album cover) */
+let npTimer = null;
+async function pollNow(){
+  clearTimeout(npTimer);
+  if (S.srcActive !== 'fmplay' || !S.set.nowPlaying) return;
+  const got = await getJSON(FM_CURRENT, 7000);
+  if (got){
+    const j = got.json, byKey = {};
+    S.stations.forEach(s => { if (s.fmKey) byKey[s.fmKey] = s.id; if (s.meta) byKey[String(s.meta)] = s.id; byKey[s.name.toLowerCase()] = s.id; });
+    const entries = Array.isArray(j) ? j.map(v => [pick(v, ['id','uid','code','alias','slug','station_id','station']) ?? pick(v, ['name']), v])
+      : Object.entries(j && typeof j === 'object' && (j.stations || j.data) && !Array.isArray(j) ? (j.stations || j.data) : j || {});
+    let changed = false;
+    for (const [k, v] of Array.isArray(entries) ? entries : Object.entries(entries)){
+      const id = byKey[String(k)] || byKey[String(k).toLowerCase()]; const n = parseNow(v, got.url);
+      if (id && n){ const o = S.np[id]; if (!o || o.title !== n.title || o.artist !== n.artist || o.cover !== n.cover) { S.np[id] = n; changed = true; } }
+    }
+    if (changed) { refreshNowUI(); }
+  }
+  npTimer = setTimeout(pollNow, document.hidden ? 60000 : 20000);
+}
+const npFor = st => st && S.set.nowPlaying && S.np[st.id] && (S.np[st.id].artist || S.np[st.id].title) ? S.np[st.id] : null;
+const npLine = n => [n.artist, n.title].filter(Boolean).join(' — ');
+function refreshNowUI(){
+  $$('.card').forEach(c => { const n = npFor(findSt(c.dataset.id)); const sub = c.querySelector('.sub'); const st = findSt(c.dataset.id);
+    if (sub && st) sub.textContent = n ? npLine(n) : subline(st); });
+  if (S.cur) { setCover(S.cur); updatePlayerUI(); }
+}
+
+async function fetchStations(){
+  $('status').hidden = false; $('status').textContent = 'Загружаю радиостанции…'; $('grid').innerHTML = '';
+  if (S.set.source === 'fmplay'){
+    if (S.srcActive === 'fmplay' && S.stations.length) { render(); return; }
+    $('status').textContent = 'Загружаю каталог FMPLAY…';
+    if (await loadFmplay()) { render(); return; }
+    S.srcActive = null;
+    toast('Каталог FMPLAY недоступен. Загружаю станции из Radio Browser');
+  }
+  S.srcActive = 'rb';
+  const p = new URLSearchParams({ hidebroken:'true', order:'clickcount', reverse:'true', limit:'240' });
+  if (S.set.country) p.set('countrycode', S.set.country);
+  if (S.tag) p.set('tag', S.tag);
+  for (const base of MIRRORS){
+    try{
+      const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 9000);
+      const r = await fetch(`${base}/json/stations/search?${p}`, { signal: ctl.signal }); clearTimeout(to);
+      if (!r.ok) continue;
+      const data = await r.json(); const seen = new Set();
+      S.stations = data.filter(x => x.url_resolved && !x.hls && !seen.has(x.name.trim().toLowerCase()) && seen.add(x.name.trim().toLowerCase()))
+        .map(x => ({ id: x.stationuuid, name: x.name.trim(), url: x.url_resolved, logo: x.favicon || '', tags: x.tags || '', bitrate: x.bitrate || 0 }));
+      render(); return;
+    }catch(e){}
+  }
+  S.stations = [];
+  render(true);
+}
+
+function allKnown(){ return [...S.custom, ...S.stations, ...Object.values(S.favs)]; }
+function findSt(id){ return allKnown().find(s => s.id === id); }
+
+/* rendering */
+function renderTabs(){
+  const t = $('tabs');
+  const favN = Object.keys(S.favs).length;
+  let h = `<button class="chip" data-tab="all" aria-pressed="${S.tab==='all'}">Все</button>
+           <button class="chip" data-tab="fav" aria-pressed="${S.tab==='fav'}">Избранные${favN ? ' · ' + favN : ''}</button>`;
+  if (S.custom.length) h += `<button class="chip" data-tab="mine" aria-pressed="${S.tab==='mine'}">Мои · ${S.custom.length}</button>`;
+  h += `<span class="chip sep">|</span>`;
+  h += GENRES.map(([k, n]) => `<button class="chip" data-tag="${k}" aria-pressed="${S.tab==='all' && S.tag===k}">${n}</button>`).join('');
+  const focusKey = document.activeElement && t.contains(document.activeElement) ? (document.activeElement.dataset.tab ?? 'g:' + document.activeElement.dataset.tag) : null;
+  t.innerHTML = h;
+  if (focusKey !== null){ const el = focusKey.startsWith('g:') ? t.querySelector(`[data-tag="${focusKey.slice(2)}"]`) : t.querySelector(`[data-tab="${focusKey}"]`); el?.focus({ preventScroll: true }); }
+}
+function logoHTML(st){
+  if (S.set.logos && st.logo) return `<img src="${esc(st.logo)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'ini',textContent:'${esc(initials(st.name)).replace(/'/g,'')}'}))">`;
+  return `<span class="ini">${esc(initials(st.name))}</span>`;
+}
+function render(failed){
+  renderTabs();
+  const focusedId = document.activeElement?.closest?.('.card')?.dataset.id;
+  let list = S.tab === 'fav' ? Object.values(S.favs) : S.tab === 'mine' ? S.custom : [...S.custom, ...S.stations];
+  if (S.tab === 'all' && S.tag && S.srcActive === 'fmplay') { const g = GENRE_WORDS[S.tag] || [S.tag]; list = list.filter(s => s.custom || g.some(w => (s.tags + ' ' + s.name).toLowerCase().includes(w))); }
+  if (S.q) { const q = S.q.toLowerCase(); list = list.filter(s => s.name.toLowerCase().includes(q) || (s.tags||'').toLowerCase().includes(q) || (npFor(s) && npLine(npFor(s)).toLowerCase().includes(q))); }
+  S.view = list;
+  const st = $('status'), g = $('grid');
+  g.style.setProperty('--cols', S.set.cols === 'auto' ? 'auto-fill' : S.set.cols);
+  if (failed && S.tab === 'all' && !S.custom.length){
+    st.hidden = false; st.innerHTML = `Не удалось загрузить каталог станций.<br>Проверьте подключение к интернету и попробуйте ещё раз.<br><button id="retry">Повторить</button>`;
+    $('retry').onclick = fetchStations; g.innerHTML = ''; if (isTV()) $('retry').focus(); return;
+  }
+  if (!list.length){
+    st.hidden = false;
+    st.textContent = S.tab === 'fav' ? (isTV() ? 'Нет избранных радиостанций. Удерживайте OK на станции, чтобы добавить её в избранное.' : 'Нет избранных радиостанций. Добавьте станции в избранное через меню ⋮ на карточке.') : S.q ? 'Ничего не найдено.' : 'Нет радиостанций';
+  } else st.hidden = true;
+  const tv = isTV();
+  g.innerHTML = list.map(s => `
+    <div class="card${S.cur && S.cur.id === s.id ? ' cur' : ''}" role="button" tabindex="0" data-id="${esc(s.id)}" aria-label="${esc(s.name)}">
+      <div class="logo" title="Открыть плеер на весь экран">${logoHTML(s)}${S.cur && S.cur.id === s.id && S.wantPlay ? '<div class="eq"><i></i><i></i><i></i></div>' : ''}</div>
+      ${S.favs[s.id] ? '<span class="fav"><svg><use href="#i-heart"/></svg></span>' : ''}
+      <button class="more" data-more="${esc(s.id)}" aria-label="Меню станции"${tv ? ' tabindex="-1"' : ''}><svg><use href="#i-dots"/></svg></button>
+      <div class="nm">${esc(s.name)}</div>
+      <div class="sub">${esc(npFor(s) ? npLine(npFor(s)) : subline(s))}</div>
+    </div>`).join('');
+  if (focusedId) g.querySelector(`.card[data-id="${CSS.escape(focusedId)}"]`)?.focus({ preventScroll: true });
+  if (tv && (!document.activeElement || document.activeElement === document.body) && $('full').hidden && !document.querySelector('dialog[open]')){
+    const target = (S.cur && g.querySelector(`.card[data-id="${CSS.escape(S.cur.id)}"]`)) || g.querySelector('.card');
+    target?.focus({ preventScroll: true });
+  }
+}
+
+/* player */
+function setCover(st){
+  const n = npFor(st), art = n && n.cover && S.set.covers ? n.cover : '';
+  const key = st ? st.id + '|' + art + '|' + S.set.logos : '-';
+  if (setCover.key === key) return; setCover.key = key;
+  let html = st ? logoHTML(st) : '<span class="ini bi">RADIO<b>·</b>NET</span>';
+  if (art) html = `<img class="art" src="${esc(art)}" alt="" referrerpolicy="no-referrer" onerror="this.outerHTML=this.dataset.fb" data-fb="${esc(st ? logoHTML(st) : '')}">`;
+  $$('[data-b="cover"]').forEach(c => c.innerHTML = html);
+  const bgImg = art || (st && st.logo && S.set.logos ? st.logo : '');
+  $$('[data-b="bg"]')[0].style.backgroundImage = bgImg ? `url("${bgImg.replace(/"/g, '%22')}")` : 'none';
+}
+function updatePlayerUI(){
+  const st = S.cur;
+  const loading = S.wantPlay && (audio.paused || audio.readyState < 3);
+  const n = npFor(st);
+  setText('station', !st ? 'RadioNet' : n && n.artist ? n.artist : st.name);
+  setText('info', !st ? 'Выберите радиостанцию' : loading ? 'Соединение…' : !S.wantPlay ? (n ? `Пауза · ${st.name}` : 'Пауза') : n ? (n.title || st.name) : subline(st));
+  setText('stname', st ? st.name : '');
+  $$('.pstate').forEach(p => { p.classList.toggle('playing', S.wantPlay && !loading); p.classList.toggle('paused', !S.wantPlay); });
+  $$('[data-b="playring"]').forEach(r => r.classList.toggle('wait', loading));
+  setIco('playico', S.wantPlay ? 'pause' : 'play');
+  $$('[data-b="playbtn"]').forEach(b => { b.title = S.wantPlay ? 'Пауза' : 'Старт'; b.setAttribute('aria-label', b.title); });
+  $$('[data-act="shuffle"]').forEach(b => b.classList.toggle('on', S.shuffle));
+  $$('[data-act="repeat"]').forEach(b => b.classList.toggle('on', S.repeat));
+  const fav = !!(st && S.favs[st.id]);
+  setIco('favico', fav ? 'heart' : 'heart-o');
+  $$('[data-b="favbtn"]').forEach(b => { b.classList.toggle('on', fav); b.title = fav ? 'Удалить из избранных' : 'Добавить в избранные'; });
+  $('cSt').textContent = st ? st.name : '';
+  document.title = st && S.wantPlay ? `▶ ${st.name} — RadioNet` : 'RadioNet';
+  $$('.card').forEach(el => {
+    const on = !!st && el.dataset.id === st.id; el.classList.toggle('cur', on);
+    const logo = el.querySelector('.logo'); const eq = logo.querySelector('.eq');
+    if (on && S.wantPlay && !eq) logo.insertAdjacentHTML('beforeend','<div class="eq"><i></i><i></i><i></i></div>');
+    if ((!on || !S.wantPlay) && eq) eq.remove();
+  });
+  if ('mediaSession' in navigator && st){
+    try {
+      const art = (n && n.cover && S.set.covers) ? n.cover : st.logo;
+      navigator.mediaSession.metadata = new MediaMetadata({ title: n ? (n.title || st.name) : st.name, artist: n ? (n.artist || st.name) : subline(st), album: st.name, artwork: art ? [{ src: art, sizes: '512x512' }] : [] });
+      navigator.mediaSession.playbackState = S.wantPlay ? 'playing' : 'paused';
+    } catch(e){}
+  }
+  if (APP) {
+    const n2 = npFor(st), key = [S.wantPlay, st && st.name, n2 ? npLine(n2) : ''].join('|');
+    if (key !== updatePlayerUI.appKey) { updatePlayerUI.appKey = key;
+      try { window.Android.setPlaying(!!(S.wantPlay && st), st ? st.name : 'RadioNet', n2 ? npLine(n2) : (st ? subline(st) : '')); } catch(e){} }
+  }
+  syncWake();
+}
+function play(st){
+  if (!st) return;
+  const changed = !S.cur || S.cur.id !== st.id;
+  S.cur = st; S.wantPlay = true; S.retries = 0;
+  if (changed){ S.acc = 0; setCover.key = null; setCover(st); }
+  S.started = 0;
+  audio.src = st.url; audio.volume = S.set.vol / 100;
+  audio.play().catch(err => { if (err.name !== 'AbortError') fail(); });
+  save(); updatePlayerUI();
+}
+function pause(){ S.wantPlay = false; if (S.started) { S.acc += (Date.now() - S.started)/1000; S.started = 0; }
+  audio.pause(); audio.removeAttribute('src'); audio.load(); updatePlayerUI(); }
+function toggle(){ if (S.wantPlay) pause(); else if (S.cur) play(S.cur); else if (S.view.length) play(S.view[0]); }
+function step(dir){
+  const v = S.view.length ? S.view : allKnown(); if (!v.length) return;
+  if (S.shuffle){ let n; do { n = v[Math.floor(Math.random()*v.length)]; } while (v.length > 1 && S.cur && n.id === S.cur.id); return play(n); }
+  const i = S.cur ? v.findIndex(s => s.id === S.cur.id) : -1;
+  play(v[(i + dir + v.length) % v.length]);
+}
+function fail(){
+  if (!S.wantPlay) return;
+  if (S.repeat && S.retries < 3){ S.retries++; setText('info', `Соединение… (попытка ${S.retries + 1})`);
+    setTimeout(() => { if (S.wantPlay){ audio.src = S.cur.url; audio.play().catch(()=>{}); } }, 1500 * S.retries); return; }
+  S.wantPlay = false; updatePlayerUI(); setText('info', 'Станция недоступна');
+  toast('Не удалось подключиться. Проверьте подключение к интернету и попробуйте ещё раз');
+}
+audio.addEventListener('playing', () => { S.retries = 0; if (!S.started) S.started = Date.now(); updatePlayerUI(); });
+audio.addEventListener('waiting', updatePlayerUI);
+audio.addEventListener('error', () => { if (audio.getAttribute('src')) fail(); });
+audio.addEventListener('stalled', () => { if (S.wantPlay && S.repeat) setTimeout(() => { if (S.wantPlay && audio.readyState < 3) fail(); }, 6000); });
+
+setInterval(() => {
+  const el = S.acc + (S.started ? (Date.now() - S.started)/1000 : 0);
+  setText('time', `[${fmt(el)}]`);
+  if (S.sleepEnd){
+    const left = (S.sleepEnd - Date.now())/1000;
+    setText('sleepleft', fmt(left));
+    setText('flabel', `${S.cur ? S.cur.name + ' · ' : ''}таймер ${fmt(left)}`);
+    if (left <= 10 && left > 0 && S.wantPlay) audio.volume = (S.set.vol/100) * (left/10);
+    if (left <= 0){ clearSleep(); pause(); toast('Таймер выключения сработал'); }
+  } else setText('flabel', S.cur ? (S.wantPlay ? `${S.cur.name} · в эфире` : S.cur.name) : 'Радиоплеер');
+  if (!$('clock').hidden) tickClock();
+}, 500);
+
+/* volume */
+function setVol(v){ v = Math.max(0, Math.min(100, Math.round(v))); S.set.vol = v; audio.volume = v/100;
+  $$('.volr').forEach(r => { r.value = v; r.style.setProperty('--v', v + '%'); }); }
+document.addEventListener('input', e => { if (e.target.classList.contains('volr')) { setVol(+e.target.value); save(); } });
+$$('.groove').forEach(g => g.addEventListener('wheel', e => { e.preventDefault(); setVol(S.set.vol + (e.deltaY < 0 ? 5 : -5)); save(); }, { passive: false }));
+
+/* full-screen player */
+let lastFocus = null;
+function openFull(){
+  if (!$('full').hidden) return;
+  lastFocus = document.activeElement;
+  $('full').hidden = false; root.classList.add('full-open');
+  try { history.pushState({ rnFull: 1 }, ''); } catch(e){}
+  updatePlayerUI(); updateFsIcon();
+  requestAnimationFrame(() => (isTV() ? $('fPlay') : $('full').querySelector('[data-act="close"]')).focus({ preventScroll: true }));
+}
+function closeFull(fromPop){
+  if ($('full').hidden) return;
+  $('full').hidden = true; root.classList.remove('full-open'); $('full').style.transform = '';
+  if (!fromPop && history.state && history.state.rnFull) { try { history.back(); } catch(e){} }
+  const back = (S.cur && $('grid').querySelector(`.card[data-id="${CSS.escape(S.cur.id)}"]`)) || lastFocus;
+  if (back && document.contains(back)) back.focus({ preventScroll: !isTV() });
+  if (isTV() && back) back.scrollIntoView({ block: 'nearest' });
+  syncWake();
+}
+addEventListener('popstate', () => { if (!$('full').hidden) closeFull(true); });
+
+/* swipe gestures (phone) */
+(() => {
+  let y0 = null, x0 = 0, t0 = 0;
+  $('player').addEventListener('touchstart', e => { if (e.target.closest('button,input')) return; y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; }, { passive: true });
+  $('player').addEventListener('touchend', e => { if (y0 === null) return; const t = e.changedTouches[0];
+    if (y0 - t.clientY > 40 && Math.abs(t.clientX - x0) < 60) openFull(); y0 = null; });
+  const f = $('full');
+  f.addEventListener('touchstart', e => { if (e.target.closest('input')) { y0 = null; return; } y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; t0 = Date.now(); }, { passive: true });
+  f.addEventListener('touchmove', e => { if (y0 === null) return; const dy = e.touches[0].clientY - y0; if (dy > 0) f.style.transform = `translateY(${dy * .6}px)`; }, { passive: true });
+  f.addEventListener('touchend', e => { if (y0 === null) return; const t = e.changedTouches[0]; const dy = t.clientY - y0;
+    f.style.transform = ''; if (dy > 110 && Math.abs(t.clientX - x0) < 80) closeFull(); y0 = null; });
+})();
+
+/* browser fullscreen */
+function updateFsIcon(){ const on = !!document.fullscreenElement; setIco('fsico', on ? 'shrink' : 'expand');
+  $$('[data-b="fsbtn"]').forEach(b => { b.title = on ? 'Выйти из полноэкранного режима' : 'Во весь экран'; b.hidden = APP || !document.fullscreenEnabled; }); }
+async function toggleFs(){ try { if (document.fullscreenElement) await document.exitFullscreen(); else await root.requestFullscreen(); } catch(e){ toast('Полноэкранный режим недоступен в этом браузере'); } }
+document.addEventListener('fullscreenchange', updateFsIcon);
+
+/* wake lock: keep screen on while full player plays, clock is open, or TV is playing */
+let wake = null;
+async function syncWake(){
+  const need = document.visibilityState === 'visible' && (!$('clock').hidden || (S.wantPlay && (!$('full').hidden || isTV())));
+  if (APP) { try { window.Android.keepScreenOn(need); } catch(e){} }
+  try {
+    if (need && !wake && navigator.wakeLock) { wake = await navigator.wakeLock.request('screen'); wake.addEventListener('release', () => { wake = null; }); }
+    else if (!need && wake) { await wake.release(); wake = null; }
+  } catch(e){ wake = null; }
+}
+document.addEventListener('visibilitychange', syncWake);
+
+/* favourites & menu */
+function toggleFav(st){
+  if (!st) return;
+  if (S.favs[st.id]) { delete S.favs[st.id]; toast(`Радиостанция ${st.name} удалена из избранных`); }
+  else { S.favs[st.id] = st; toast(`Радиостанция ${st.name} добавлена в избранные`); }
+  save(); render(); updatePlayerUI();
+}
+let menuReturn = null, okGuard = false;
+function openMenu(st, x, y, kbd){
+  if (!st) return;
+  const m = $('menu'); const fav = !!S.favs[st.id];
+  menuReturn = document.activeElement;
+  m.innerHTML = `
+    <button data-a="play"><svg><use href="#i-play"/></svg>Слушать</button>
+    <button data-a="full"><svg><use href="#i-expand"/></svg>Открыть плеер на весь экран</button>
+    <button data-a="fav"><svg><use href="#i-${fav ? 'heart' : 'heart-o'}"/></svg>${fav ? 'Удалить из избранных' : 'Добавить в избранные'}</button>
+    <button data-a="name"><svg><use href="#i-copy"/></svg>Скопировать название станции</button>
+    <button data-a="link"><svg><use href="#i-link"/></svg>Скопировать ссылку</button>
+    ${st.custom ? `<button data-a="edit"><svg><use href="#i-edit"/></svg>Редактировать</button><button data-a="del" class="danger"><svg><use href="#i-trash"/></svg>Удалить</button>` : ''}`;
+  m.hidden = false;
+  const r = m.getBoundingClientRect();
+  m.style.left = Math.max(8, Math.min(x, innerWidth - r.width - 8)) + 'px';
+  m.style.top = Math.max(8, Math.min(y, innerHeight - r.height - 8)) + 'px';
+  if (kbd || isTV()) m.querySelector('button').focus();
+  m.onclick = e => { const a = e.target.closest('button')?.dataset.a; if (!a) return; closeMenu(a !== 'full' && a !== 'edit');
+    if (a === 'play') play(st);
+    if (a === 'full') { if (!(S.cur && S.cur.id === st.id)) play(st); openFull(); }
+    if (a === 'fav') toggleFav(st);
+    if (a === 'name') copy(st.name); if (a === 'link') copy(st.url, 'Ссылка скопирована');
+    if (a === 'edit') openStationDlg(st);
+    if (a === 'del'){ S.custom = S.custom.filter(s => s.id !== st.id); delete S.favs[st.id]; save(); render(); toast(`Станция ${st.name} удалена`); }
+  };
+}
+function closeMenu(restore = true){ if ($('menu').hidden) return; $('menu').hidden = true;
+  if (restore && menuReturn && document.contains(menuReturn)) menuReturn.focus({ preventScroll: true }); }
+document.addEventListener('click', e => { if (!e.target.closest('#menu') && !e.target.closest('[data-more],[data-act="menu"]')) closeMenu(false); });
+document.addEventListener('scroll', () => closeMenu(false), true);
+
+/* cards */
+function activateCard(c, openBig){
+  const st = findSt(c.dataset.id); if (!st) return;
+  if (openBig || S.set.autoFull){ if (!(S.cur && S.cur.id === st.id && S.wantPlay)) play(st); openFull(); return; }
+  if (S.cur && S.cur.id === st.id) toggle(); else play(st);
+}
+$('grid').addEventListener('click', e => {
+  const more = e.target.closest('[data-more]');
+  if (more){ e.stopPropagation(); const r = more.getBoundingClientRect(); openMenu(findSt(more.dataset.more), r.left - 200, r.bottom + 6); return; }
+  const c = e.target.closest('.card'); if (!c) return;
+  if (c.dataset.lp) { delete c.dataset.lp; return; }
+  activateCard(c, !!e.target.closest('.logo') || isTV());
+});
+$('grid').addEventListener('keydown', e => {
+  const c = e.target.closest('.card'); if (!c || !(e.key === 'Enter' || e.key === ' ')) return;
+  e.preventDefault(); e.stopPropagation();
+  if (isTV()){ if (e.repeat && !okGuard){ okGuard = true; const r = c.getBoundingClientRect(); openMenu(findSt(c.dataset.id), r.left + 24, r.top + 24, true); } return; }
+  activateCard(c, false);
+});
+$('grid').addEventListener('keyup', e => {
+  const c = e.target.closest('.card');
+  if (c && isTV() && (e.key === 'Enter' || e.key === ' ') && !okGuard) activateCard(c, true);
+});
+document.addEventListener('keyup', e => { if (e.key === 'Enter' || e.key === ' ') setTimeout(() => okGuard = false, 0); });
+document.addEventListener('keydown', e => { if (okGuard && (e.key === 'Enter' || e.key === ' ') && !e.target.closest('.card')) { e.preventDefault(); e.stopPropagation(); } }, true);
+$('grid').addEventListener('contextmenu', e => { const c = e.target.closest('.card'); if (!c) return; e.preventDefault(); openMenu(findSt(c.dataset.id), e.clientX, e.clientY); });
+let lpT; $('grid').addEventListener('touchstart', e => { const c = e.target.closest('.card'); if (!c) return; const t = e.touches[0];
+  lpT = setTimeout(() => { c.dataset.lp = 1; openMenu(findSt(c.dataset.id), t.clientX, t.clientY); navigator.vibrate?.(15); }, 550); }, { passive: true });
+['touchend','touchmove','touchcancel'].forEach(ev => $('grid').addEventListener(ev, () => clearTimeout(lpT), { passive: true }));
+
+$('tabs').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.tab){ S.tab = b.dataset.tab; render(); }
+  else if ('tag' in b.dataset){ S.tab = 'all'; if (S.tag !== b.dataset.tag){ S.tag = b.dataset.tag; S.srcActive === 'fmplay' ? render() : fetchStations(); } else render(); }
+});
+$('q').addEventListener('input', e => { S.q = e.target.value.trim(); render(); });
+$('q').addEventListener('keydown', e => { if (e.key === 'Enter') { e.target.blur(); if (isTV()) $('grid').querySelector('.card')?.focus(); } });
+
+/* delegated player actions */
+document.addEventListener('click', e => {
+  const a = e.target.closest('[data-act]'); if (!a) return;
+  switch (a.dataset.act){
+    case 'play': toggle(); break;
+    case 'prev': step(-1); break;
+    case 'next': step(1); break;
+    case 'shuffle': S.shuffle = !S.shuffle; save(); updatePlayerUI(); toast(S.shuffle ? 'Случайный порядок станций' : 'Станции по порядку'); break;
+    case 'repeat': S.repeat = !S.repeat; save(); updatePlayerUI(); toast(S.repeat ? 'Переподключение при обрыве включено' : 'Переподключение при обрыве выключено'); break;
+    case 'full': openFull(); break;
+    case 'close': closeFull(); break;
+    case 'fav': S.cur ? toggleFav(S.cur) : toast('Сначала выберите радиостанцию'); break;
+    case 'sleep': openSleep(); break;
+    case 'clock': openClock(); break;
+    case 'fs': toggleFs(); break;
+    case 'menu': { if (!S.cur) { toast('Сначала выберите радиостанцию'); break; } const r = a.getBoundingClientRect(); openMenu(S.cur, r.right - 240, r.bottom + 8, e.detail === 0); break; }
+  }
+});
+if ('mediaSession' in navigator){
+  try {
+    navigator.mediaSession.setActionHandler('play', () => S.cur && play(S.cur));
+    navigator.mediaSession.setActionHandler('pause', pause);
+    navigator.mediaSession.setActionHandler('stop', pause);
+    navigator.mediaSession.setActionHandler('previoustrack', () => step(-1));
+    navigator.mediaSession.setActionHandler('nexttrack', () => step(1));
+  } catch(e){}
+}
+
+/* dialogs: never submit a form (some Android browsers/wrappers leave the page on submit) */
+const supportsModal = typeof HTMLDialogElement === 'function' && 'showModal' in HTMLDialogElement.prototype;
+let dlgReturn = null;
+function showDlg(d){
+  dlgReturn = document.activeElement;
+  if (supportsModal) { try { if (!d.open) d.showModal(); return; } catch(e){} }
+  d.setAttribute('open', ''); d.classList.add('fallback');
+  if (!document.querySelector('.dlg-shade')) { const sh = document.createElement('div'); sh.className = 'dlg-shade'; sh.onclick = () => closeDlg(d); document.body.appendChild(sh); }
+  d.querySelector('button,input,select')?.focus();
+}
+function closeDlg(d){
+  if (!d) return;
+  if (supportsModal && typeof d.close === 'function') { try { d.close(); } catch(e){ d.removeAttribute('open'); } }
+  else d.removeAttribute('open');
+  d.classList.remove('fallback'); document.querySelector('.dlg-shade')?.remove();
+  if (dlgReturn && document.contains(dlgReturn) && $('menu').hidden) dlgReturn.focus({ preventScroll: true });
+}
+document.addEventListener('submit', e => { if (e.target.closest('dialog')) e.preventDefault(); }, true);
+document.addEventListener('click', e => { const c = e.target.closest('[data-close]'); if (c) { e.preventDefault(); closeDlg(c.closest('dialog')); } });
+$$('dialog').forEach(d => d.addEventListener('cancel', e => { e.preventDefault(); closeDlg(d); }));
+
+/* sleep timer */
+const SLEEP = [10, 15, 30, 45, 60, 90, 120, 180, 240];
+$('sleepTimes').innerHTML = SLEEP.map(m => `<button type="button" value="${m}">${m < 60 ? m : m/60}<small>${m < 60 ? 'минут' : m === 60 ? 'час' : 'часа'}</small></button>`).join('');
+$('sleepTimes').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; e.preventDefault();
+  S.sleepEnd = Date.now() + (+b.value) * 60000; $('sleepChip').hidden = false; $('bSleep').hidden = true; $$('[data-b="sleepbtn"]').forEach(x => x.classList.add('on'));
+  closeDlg($('dSleep')); toast(`Радио выключится через ${b.textContent.replace(/(\d+)/,'$1 ')}`); });
+function clearSleep(){ S.sleepEnd = 0; $('sleepChip').hidden = true; $('bSleep').hidden = false; audio.volume = S.set.vol/100; $$('[data-b="sleepbtn"]').forEach(x => x.classList.remove('on')); }
+function openSleep(){ $('sleepOff').hidden = !S.sleepEnd; showDlg($('dSleep')); }
+$('sleepOff').onclick = () => { clearSleep(); closeDlg($('dSleep')); toast('Таймер выключения отключён'); };
+
+/* add / edit station */
+let editing = null;
+function openStationDlg(st){
+  editing = st || null;
+  $('dStationTitle').textContent = st ? 'Редактирование станции' : 'Добавить станцию';
+  $('sSave').textContent = st ? 'Сохранить' : 'Добавить';
+  $('sName').value = st ? st.name : ''; $('sUrl').value = st ? st.url : ''; $('sLogo').value = st ? st.logo : '';
+  showDlg($('dStation'));
+}
+$('bAdd').onclick = () => openStationDlg();
+$('sCancel').onclick = () => closeDlg($('dStation'));
+$('fStation').addEventListener('submit', e => {
+  e.preventDefault();
+  let url = $('sUrl').value.trim();
+  try { new URL(url); } catch(_) { toast('Не удалось распознать ссылку'); return; }
+  const data = { name: $('sName').value.trim(), url, logo: $('sLogo').value.trim(), custom: true, tags: '', bitrate: 0 };
+  if (editing){ Object.assign(editing, data); if (S.favs[editing.id]) S.favs[editing.id] = editing; toast('Станция сохранена'); }
+  else { const st = { id: 'my-' + Date.now(), ...data }; S.custom.unshift(st); toast(`Станция ${st.name} добавлена`); }
+  save(); render(); closeDlg($('dStation')); if (editing && S.cur && S.cur.id === editing.id) { S.cur = editing; setCover.key = null; setCover(editing); updatePlayerUI(); }
+});
+
+/* settings */
+function renderAbout(){
+  $('about').innerHTML = isTV()
+    ? `<b>RadioNet</b> — экономичный и минималистичный радиоплеер. Каталог станций: ${S.srcActive === 'fmplay' ? 'FMPLAY' : 'Radio Browser'}.<br>
+       <b>Пульт:</b> стрелки — выбор, <code>OK</code> — включить станцию и открыть плеер, удерживать <code>OK</code> — меню станции, <code>Назад</code> — свернуть плеер, кнопки ⏯ ⏭ ⏮ и <code>CH+</code>/<code>CH−</code> — управление эфиром.`
+    : `<b>RadioNet</b> — экономичный и минималистичный радиоплеер. Каталог станций: ${S.srcActive === 'fmplay' ? 'FMPLAY' : 'Radio Browser'}.<br>
+       Нажмите на значок станции, чтобы открыть плеер на весь экран. На смартфоне смахните мини-плеер вверх, чтобы развернуть, и вниз, чтобы свернуть.<br>
+       <b>Клавиши:</b> <code>Пробел</code> — старт/пауза, <code>←</code> <code>→</code> — станции, <code>↑</code> <code>↓</code> — громкость, <code>F</code> — плеер на весь экран, <code>C</code> — часы, <code>/</code> — поиск, <code>Esc</code> — назад. Колесо мыши над ползунком меняет громкость.`;
+}
+function applySettings(){
+  root.dataset.theme = S.set.dark ? 'dark' : 'light';
+  root.classList.toggle('tv', isTV());
+  document.querySelector('meta[name="theme-color"]').content = S.set.dark ? '#0e6b8d' : '#8fc7da';
+  $('searchBox').style.visibility = S.set.search ? 'visible' : 'hidden';
+  $('stDark').checked = S.set.dark; $('stSearch').checked = S.set.search; $('stAuto').checked = S.set.auto; $('stLogos').checked = S.set.logos; $('stAutoFull').checked = S.set.autoFull;
+  $('stCountry').value = S.set.country; $('stSource').value = S.set.source; $('stNow').checked = S.set.nowPlaying; $('stCovers').checked = S.set.covers;
+  $('stCountry').disabled = S.srcActive === 'fmplay';
+  $('srcNote').textContent = S.srcActive === 'fmplay' ? `Загружено станций: ${S.stations.length}` : S.set.source === 'fmplay' ? 'Каталог FMPLAY сейчас недоступен, показан Radio Browser' : '';
+  $('stCols').innerHTML = ['auto','2','3','4','5','6'].map(c => `<button type="button" data-c="${c}" aria-pressed="${S.set.cols===c}">${c === 'auto' ? 'Авто' : c}</button>`).join('');
+  $('stTv').innerHTML = [['auto', TV_UA ? 'Авто (ТВ)' : 'Авто'],['on','Включён'],['off','Выключен']].map(([v, n]) => `<button type="button" data-tv="${v}" aria-pressed="${S.set.tv===v}">${n}</button>`).join('');
+  $('cHint').textContent = isTV() ? 'Нажмите «Назад», чтобы выйти' : 'Нажмите, чтобы выйти';
+  renderAbout();
+}
+$('bSettings').onclick = () => { applySettings(); showDlg($('dSettings')); };
+$('stDark').onchange = e => { S.set.dark = e.target.checked; save(); applySettings(); };
+$('stSearch').onchange = e => { S.set.search = e.target.checked; save(); applySettings(); };
+$('stAuto').onchange = e => { S.set.auto = e.target.checked; save(); };
+$('stAutoFull').onchange = e => { S.set.autoFull = e.target.checked; save(); };
+$('stSource').onchange = e => { S.set.source = e.target.value; S.srcActive = null; S.stations = []; S.tag = ''; save(); fetchStations().then(applySettings); };
+$('stNow').onchange = e => { S.set.nowPlaying = e.target.checked; save(); if (S.set.nowPlaying) pollNow(); refreshNowUI(); render(); };
+$('stCovers').onchange = e => { S.set.covers = e.target.checked; save(); setCover.key = null; setCover(S.cur); updatePlayerUI(); };
+$('stLogos').onchange = e => { S.set.logos = e.target.checked; save(); render(); setCover.key = null; setCover(S.cur); };
+$('stCols').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.set.cols = b.dataset.c; save(); applySettings(); render(); $('stCols').querySelector(`[data-c="${b.dataset.c}"]`).focus(); };
+$('stTv').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.set.tv = b.dataset.tv; save(); applySettings(); render(); $('stTv').querySelector(`[data-tv="${b.dataset.tv}"]`).focus(); toast(isTV() ? 'Интерфейс для телевизора включён' : 'Интерфейс для телевизора выключен'); };
+$('stCountry').onchange = e => { S.set.country = e.target.value; save(); fetchStations(); };
+
+/* import / export (txt) */
+function plural(n){ const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? 'станция' : a >= 2 && a <= 4 && (b < 12 || b > 14) ? 'станции' : 'станций'; }
+$('stExport').onclick = () => {
+  const seen = new Set(), list = [];
+  [...S.custom, ...Object.values(S.favs)].forEach(s => { if (!seen.has(s.url)) { seen.add(s.url); list.push(s); } });
+  if (!list.length) { toast('Нет станций для экспорта. Добавьте свои станции или избранные'); return; }
+  const clean = v => String(v || '').replace(/[|\r\n]+/g, ' ').trim();
+  const lines = ['# RadioNet — список радиостанций', '# Формат: Название | Ссылка на поток | Логотип (необязательно)', '',
+    ...list.map(s => [clean(s.name), clean(s.url), clean(s.logo)].filter((v, i) => v || i < 2).join(' | '))];
+  const fname = `radionet-stations-${new Date().toISOString().slice(0,10)}.txt`;
+  if (APP && window.Android.saveFile) { const path = window.Android.saveFile(fname, lines.join('\r\n') + '\r\n');
+    toast(path ? `Сохранено: ${path} (${list.length} ${plural(list.length)})` : 'Не удалось сохранить файл'); return; }
+  const blob = new Blob([lines.join('\r\n') + '\r\n'], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a'); const d = new Date();
+  a.href = URL.createObjectURL(blob);
+  a.download = `radionet-stations-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.txt`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  toast(`Экспортировано: ${list.length} ${plural(list.length)}`);
+};
+function loadSqlJs(){
+  if (window.initSqlJs) return Promise.resolve(window.initSqlJs);
+  return new Promise((res, rej) => { const sc = document.createElement('script');
+    sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js';
+    sc.onload = () => res(window.initSqlJs); sc.onerror = () => rej(new Error('net')); document.head.appendChild(sc); });
+}
+async function importDb(f){
+  toast('Читаю базу FMPLAY…');
+  let SQL;
+  try { const init = await loadSqlJs(); SQL = await init({ locateFile: n => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${n}` }); }
+  catch(e){ toast('Для чтения базы нужен интернет. Подключитесь и попробуйте ещё раз'); return; }
+  let rows = [];
+  try {
+    const db = new SQL.Database(new Uint8Array(await f.arrayBuffer()));
+    const res = db.exec('SELECT * FROM stations');
+    if (res[0]) rows = res[0].values.map(v => Object.fromEntries(res[0].columns.map((c, i) => [c, v[i]])));
+    db.close();
+  } catch(e){ toast('В файле нет таблицы станций FMPLAY'); return; }
+  const list = parseCatalog(rows, 'https://fmplay.ru/');
+  if (!list.length) { toast('В базе не найдено станций'); return; }
+  const known = new Set(allKnown().map(s => s.url)); let added = 0, favs = 0;
+  for (const st of list){
+    if (known.has(st.url)) continue; known.add(st.url);
+    const ns = { ...st, id: 'my-' + Date.now() + '-' + added, custom: true, now: undefined };
+    S.custom.push(ns); added++;
+    if (st.fav) { S.favs[ns.id] = ns; favs++; }
+  }
+  save(); if (added) { S.tab = 'mine'; render(); closeDlg($('dSettings')); }
+  toast(added ? `Импортировано из базы FMPLAY: ${added} ${plural(added)}${favs ? `, в избранном: ${favs}` : ''}` : 'Все станции из базы уже есть');
+}
+$('stImport').onclick = () => { $('importFile').value = ''; $('importFile').click(); };
+$('importFile').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  /* FMPLAY app database (SQLite, table `stations`) */
+  try {
+    const head = new Uint8Array(await f.slice(0, 16).arrayBuffer());
+    if (String.fromCharCode(...head).startsWith('SQLite format 3')) { await importDb(f); return; }
+  } catch(_) {}
+  let text; try { text = await f.text(); } catch (_) { toast('Не удалось прочитать файл'); return; }
+  const known = new Set(allKnown().map(s => s.url)); let added = 0, skipped = 0, pendingName = '';
+  const tt = text.replace(/^\uFEFF/, '').trim();
+  if (tt.startsWith('{') || tt.startsWith('[')) {
+    let list = [];
+    try { list = parseCatalog(JSON.parse(tt), 'https://fmplay.ru/'); } catch(_) { toast('Не удалось прочитать JSON-файл'); return; }
+    for (const st of list) { if (known.has(st.url)) { skipped++; continue; } known.add(st.url);
+      S.custom.push({ ...st, id: 'my-' + Date.now() + '-' + added, custom: true, now: undefined }); added++; }
+    save(); if (added) { S.tab = 'mine'; render(); closeDlg($('dSettings')); }
+    toast(added ? `Импортировано из JSON: ${added} ${plural(added)}${skipped ? `, пропущено: ${skipped}` : ''}` : 'В файле не найдено новых станций');
+    return;
+  }
+  const isUrl = v => { try { const u = new URL(v); return /^https?:$/.test(u.protocol); } catch (_) { return false; } };
+  for (let line of text.replace(/^﻿/, '').split(/\r?\n/)) {
+    line = line.trim(); if (!line) continue;
+    if (/^#EXTINF/i.test(line)) { pendingName = line.split(',').slice(1).join(',').trim(); continue; }
+    if (line.startsWith('#')) continue;
+    let name, url, logo = '';
+    const parts = line.split(/\s*[|;\t]\s*/);
+    if (parts.length >= 2 && isUrl(parts[1])) [name, url, logo = ''] = parts;
+    else if (isUrl(parts[0])) { url = parts[0]; name = pendingName || new URL(url).hostname; logo = parts[1] && isUrl(parts[1]) ? parts[1] : ''; }
+    else { skipped++; pendingName = ''; continue; }
+    pendingName = '';
+    if (known.has(url)) { skipped++; continue; }
+    known.add(url);
+    S.custom.push({ id: 'my-' + Date.now() + '-' + added, name: name.trim() || 'Без названия', url, logo: isUrl(logo) ? logo : '', custom: true, tags: '', bitrate: 0 });
+    added++;
+  }
+  save();
+  if (added) { S.tab = 'mine'; render(); closeDlg($('dSettings')); }
+  toast(added ? `Импортировано: ${added} ${plural(added)}${skipped ? `, пропущено: ${skipped}` : ''}` : 'В файле не найдено новых станций');
+};
+
+/* clock */
+const MONTHS = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const DAYS = ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+function tickClock(){ const d = new Date();
+  $('cHM').innerHTML = `${String(d.getHours()).padStart(2,'0')}<span class="c">:</span>${String(d.getMinutes()).padStart(2,'0')}`;
+  $('cDate').textContent = `${DAYS[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]}`; }
+let clockFs = false;
+async function openClock(){ tickClock(); $('clock').hidden = false; syncWake();
+  if (!document.fullscreenElement) { try { await root.requestFullscreen?.(); clockFs = true; } catch(e){} } }
+function closeClock(){ $('clock').hidden = true; syncWake(); if (clockFs && document.fullscreenElement) document.exitFullscreen?.().catch(()=>{}); clockFs = false; }
+$('stClock').onclick = () => { closeDlg($('dSettings')); openClock(); }; $('clock').onclick = closeClock;
+
+/* spatial navigation for TV remotes / D-pad */
+function activeLayer(){
+  return document.querySelector('dialog[open]') || (!$('menu').hidden && $('menu')) || (!$('clock').hidden && $('clock')) || (!$('full').hidden && $('full')) || document.body;
+}
+function focusables(layer){
+  return $$('button:not([disabled]),[role="button"][tabindex="0"],input:not([type="hidden"]),select,a[href]', layer).filter(el => {
+    if (el.tabIndex < 0 || el.closest('[hidden]')) return false;
+    if (layer === document.body && el.closest('#full,#menu,dialog,#clock')) return false;
+    if (!el.getClientRects().length) return false;
+    const cs = getComputedStyle(el); if (cs.visibility === 'hidden' || cs.pointerEvents === 'none') return false;
+    const sw = el.closest('.sw'); if (sw && el.type !== 'checkbox') return false;
+    return true;
+  });
+}
+function rectOf(el){ return (el.closest('.sw') || el).getBoundingClientRect(); }
+function nav(dir){
+  const layer = activeLayer(); const items = focusables(layer); if (!items.length) return;
+  const cur = document.activeElement;
+  if (!cur || cur === document.body || !layer.contains(cur)) { items[0].focus(); items[0].scrollIntoView({ block: 'nearest', inline: 'nearest' }); return; }
+  const r = rectOf(cur); const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  let best = null, bs = Infinity;
+  for (const el of items){
+    if (el === cur || el.contains(cur) || cur.contains(el)) continue;
+    const b = rectOf(el); const x = b.left + b.width / 2, y = b.top + b.height / 2;
+    let main, cross;
+    if (dir === 'left' || dir === 'right'){
+      main = dir === 'left' ? r.left - b.right : b.left - r.right;
+      if ((dir === 'left' ? x >= cx - 2 : x <= cx + 2)) continue;
+      cross = Math.max(0, b.top - r.bottom, r.top - b.bottom);
+      if (cross > 0) cross += 400; // prefer same row
+    } else {
+      main = dir === 'up' ? r.top - b.bottom : b.top - r.bottom;
+      if ((dir === 'up' ? y >= cy - 2 : y <= cy + 2)) continue;
+      cross = Math.max(0, b.left - r.right, r.left - b.right);
+    }
+    const score = Math.max(main, -20) + cross * 2 + Math.abs(dir === 'left' || dir === 'right' ? y - cy : x - cx) * 0.05;
+    if (score < bs) { bs = score; best = el; }
+  }
+  if (best){ best.focus({ preventScroll: true }); best.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
+}
+
+/* hooks for the Android app (back button, remote and notification controls) */
+window.rnBack = () => handleBack();
+window.rnMedia = a => { ({ toggle, play: () => !S.wantPlay && toggle(), pause: () => S.wantPlay && pause(), stop: pause, next: () => step(1), prev: () => step(-1) }[a] || (() => {}))(); };
+window.rnMenu = () => { const c = document.activeElement?.closest?.('.card'); const st = c ? findSt(c.dataset.id) : S.cur; if (!st) return;
+  const r = (c || $('player')).getBoundingClientRect(); openMenu(st, r.left + 24, r.top + 24, true); };
+
+/* keys: media, back, shortcuts */
+let lastMedia = 0;
+const media = fn => () => { const n = Date.now(); if (n - lastMedia < 300) return; lastMedia = n; fn(); };
+const MEDIA = {
+  MediaPlayPause: media(toggle), MediaPlay: media(() => !S.wantPlay && toggle()), MediaPause: media(() => S.wantPlay && pause()), MediaStop: media(pause),
+  MediaTrackNext: media(() => step(1)), MediaTrackPrevious: media(() => step(-1)), MediaFastForward: media(() => step(1)), MediaRewind: media(() => step(-1)),
+  ChannelUp: media(() => step(1)), ChannelDown: media(() => step(-1)),
+};
+const BACK_CODES = new Set([4, 8, 10009, 461, 27]);
+function isBack(e){ return e.key === 'Escape' || e.key === 'GoBack' || e.key === 'BrowserBack' || (BACK_CODES.has(e.keyCode) && e.keyCode !== 8) || (e.keyCode === 8 && isTV() && !e.target.matches('input,textarea')); }
+function handleBack(){
+  if (!$('menu').hidden) { closeMenu(); return true; }
+  const dlg = document.querySelector('dialog[open]'); if (dlg) { closeDlg(dlg); return true; }
+  if (!$('clock').hidden) { closeClock(); return true; }
+  if (!$('full').hidden) { closeFull(); return true; }
+  return false;
+}
+document.addEventListener('keydown', e => {
+  if (MEDIA[e.key]) { e.preventDefault(); MEDIA[e.key](); return; }
+  if (isBack(e)) { if (handleBack()) e.preventDefault(); return; }
+  const k = e.key, ae = document.activeElement;
+  const typing = ae && ae.matches('input[type="search"],input[type="text"],input[type="url"],input:not([type]),textarea');
+  if (isTV() && k.startsWith('Arrow')) {
+    if (ae && ae.type === 'range' && (k === 'ArrowLeft' || k === 'ArrowRight')) return;
+    if (typing && (k === 'ArrowLeft' || k === 'ArrowRight')) return;
+    e.preventDefault(); nav(k.slice(5).toLowerCase()); return;
+  }
+  if (k === 'ContextMenu' || k === 'Menu') {
+    const c = ae?.closest?.('.card'); if (c) { e.preventDefault(); const r = c.getBoundingClientRect(); openMenu(findSt(c.dataset.id), r.left + 24, r.top + 24, true); }
+    return;
+  }
+  if (document.querySelector('dialog[open]') || !$('menu').hidden || typing || (ae && ae.matches('select,input[type="range"]'))) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const onControl = ae && ae.closest('button,.card,[role="button"]');
+  if (e.code === 'Space' && !onControl) { e.preventDefault(); toggle(); return; }
+  if (isTV()) return;
+  const kl = k.toLowerCase();
+  if (k === 'ArrowRight') { e.preventDefault(); step(1); }
+  else if (k === 'ArrowLeft') { e.preventDefault(); step(-1); }
+  else if (k === 'ArrowUp' && !$('full').hidden) { e.preventDefault(); setVol(S.set.vol + 5); save(); }
+  else if (k === 'ArrowDown' && !$('full').hidden) { e.preventDefault(); setVol(S.set.vol - 5); save(); }
+  else if (kl === 'f' || kl === 'а') { e.preventDefault(); $('full').hidden ? openFull() : closeFull(); }
+  else if (kl === 'c' || kl === 'с') { $('clock').hidden ? openClock() : closeClock(); }
+  else if (kl === 'm' || kl === 'ь') { S.cur ? toggleFav(S.cur) : null; }
+  else if (k === '/') { e.preventDefault(); if (!$('full').hidden) closeFull(); $('q').focus(); }
+});
+/* Enter on non-button role=button elements (dock cover) */
+document.addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[role="button"]:not(.card)')) { e.preventDefault(); e.target.click(); }
+});
+
+/* dock height for layout + toast placement */
+new ResizeObserver(() => root.style.setProperty('--dockh', $('dock').offsetHeight + 'px')).observe($('dock'));
+addEventListener('resize', () => closeMenu(false));
+
+/* boot */
+load(); applySettings(); setVol(S.set.vol); renderTabs();
+if (S.last){ S.cur = S.last; setCover(S.cur); }
+updatePlayerUI(); updateFsIcon();
+fetchStations().then(() => {
+  if (S.set.auto && S.cur) play(S.cur);
+});
+})();
+</script>
+</body>
+</html>

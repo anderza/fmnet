@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="stage">#FF07344B</color>
+    <style name="AppTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/stage</item>
+        <item name="android:colorPrimary">#FF0E6B8D</item>
+        <item name="android:colorPrimaryDark">#FF0E6B8D</item>
+        <item name="android:colorAccent">#FFF3C98E</item>
+        <item name="android:statusBarColor">#FF0E6B8D</item>
+        <item name="android:navigationBarColor">#FF07344B</item>
+    </style>
+</resources>
