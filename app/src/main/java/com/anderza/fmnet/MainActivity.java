@@ -73,8 +73,6 @@ public class MainActivity extends Activity {
         s.setLoadWithOverviewMode(false);
         s.setUseWideViewPort(true);
         s.setSupportZoom(false);
-        s.setBuiltInControls(false);
-        s.setDisplayZoomControls(false);
         s.setTextZoom(100);
         s.setUserAgentString(s.getUserAgentString() + " RadioNetApp/1" + (tv ? " AndroidTV" : ""));
 
