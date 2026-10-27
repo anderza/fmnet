@@ -68,7 +68,7 @@ header{position:sticky;top:0;z-index:20;padding-block:max(14px,env(safe-area-ins
 .search svg{flex:none;fill:var(--muted)}
 .tools{display:flex;gap:6px}
 .tbtn{width:40px;height:40px;border-radius:50%;background:var(--panel);display:grid;place-items:center;box-shadow:0 2px 6px var(--shadow);position:relative;flex:none}
-.tbtn svg{fill:var(--icon);width:20px;height:20px}
+.tbtn svg{fill:var(--icon);width:18px;height:18px}
 .tbtn.on svg{fill:var(--gold)}
 .sleepchip{height:40px;border-radius:999px;background:var(--panel);color:var(--gold);padding:0 14px;display:flex;align-items:center;gap:6px;font-weight:700;font-variant-numeric:tabular-nums;box-shadow:0 2px 6px var(--shadow)}
 .sleepchip svg{fill:var(--gold);width:16px;height:16px}
@@ -78,6 +78,15 @@ header{position:sticky;top:0;z-index:20;padding-block:max(14px,env(safe-area-ins
 .chip{flex:none;height:32px;padding:0 14px;border-radius:999px;background:color-mix(in srgb,var(--panel) 70%,transparent);color:var(--ink);font-weight:600;font-size:13px;white-space:nowrap;scroll-margin:0 24px}
 .chip[aria-pressed="true"]{background:var(--gold);color:var(--gold-ink)}
 .chip.sep{background:none;padding:0 2px;color:var(--faint);pointer-events:none}
+.chip.pick{display:flex;align-items:center;gap:4px;padding:0 10px 0 16px}
+.chip.pick svg{width:18px;height:18px;fill:currentColor;transition:transform .15s}
+.chip.pick[aria-expanded="true"] svg{transform:rotate(180deg)}
+.menu.picker{min-width:220px;max-height:min(70vh,520px);overflow:auto}
+.menu.picker button{font-weight:600}
+.menu.picker button svg{fill:var(--gold);visibility:hidden}
+.menu.picker button[aria-checked="true"]{color:var(--gold)}
+.menu.picker button[aria-checked="true"] svg{visibility:visible}
+.menu.picker small{margin-left:auto;color:var(--muted);font-weight:500;font-variant-numeric:tabular-nums}
 
 /* grid */
 main{padding-block:10px calc(var(--dockh,240px) + 24px)}
@@ -156,10 +165,10 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radiu
 .knob:focus-visible,.r-sm:focus-visible .knob{outline:none;box-shadow:0 0 0 3px var(--gold),0 4px 8px var(--shadow)}
 .r-sm:focus-visible{outline:none}
 .r-sm{padding:0;flex:none;border-radius:50%}.r-sm .knob{width:46px;height:46px;background:radial-gradient(circle at 50% 35%,var(--ring-a),var(--ring-b));box-shadow:inset 0 2px 4px rgba(0,0,0,.4)}
-.r-sm .knob svg{width:24px;height:24px}
+.r-sm .knob svg{width:20px;height:20px}
 .r-sm.on .knob svg{fill:var(--gold)}
-.r-md{width:96px;height:96px}.r-md .knob{width:66px;height:66px}.r-md svg{width:22px;height:22px}
-.r-lg{width:132px;height:132px}.r-lg .knob{width:94px;height:94px}.r-lg svg{width:34px;height:34px}
+.r-md{width:96px;height:96px}.r-md .knob{width:66px;height:66px}.r-md svg{width:29px;height:29px}
+.r-lg{width:132px;height:132px}.r-lg .knob{width:94px;height:94px}.r-lg svg{width:41px;height:41px}
 .r-lg.wait .knob::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:2px solid transparent;border-top-color:var(--gold);animation:spin 1s linear infinite}
 
 /* docked player */
@@ -169,9 +178,9 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radiu
 .player .cover-wrap{width:170px;cursor:pointer;border-radius:4px}
 .player .meta{cursor:pointer}
 .player .pmain{min-width:0;display:flex;flex-direction:column;gap:10px}
-.player .r-lg{width:112px;height:112px}.player .r-lg .knob{width:80px;height:80px}.player .r-lg svg{width:30px;height:30px}
-.player .r-md{width:82px;height:82px}.player .r-md .knob{width:56px;height:56px}
-.player .r-sm .knob{width:42px;height:42px}
+.player .r-lg{width:112px;height:112px}.player .r-lg .knob{width:80px;height:80px}.player .r-lg svg{width:35px;height:35px}
+.player .r-md{width:82px;height:82px}.player .r-md .knob{width:56px;height:56px}.player .r-md svg{width:25px;height:25px}
+.player .r-sm .knob{width:42px;height:42px}.player .r-sm .knob svg{width:18px;height:18px}
 .mini{display:none}
 @media (max-height:700px) and (min-width:641px){
   .player .cover-wrap{width:130px}.player{padding:12px}
@@ -189,7 +198,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radiu
   .player .meta .a{font-size:16px}.player .meta .t{font-size:13px;color:var(--muted)}.player .meta .tm{display:none}
   .player .groove,.player .controls{display:none}
   .player .mini{display:flex;gap:8px;align-items:center}
-  .mini .knob{width:46px;height:46px}.mini .knob svg{width:18px;height:18px}
+  .mini .knob{width:46px;height:46px}.mini .knob svg{width:20px;height:20px}
   .mini .knob.sm{width:38px;height:38px;background:radial-gradient(circle at 50% 35%,var(--ring-a),var(--ring-b));box-shadow:inset 0 2px 4px rgba(0,0,0,.4)}
   .mini .knob.sm svg{width:16px;height:16px}
   .player .vinyl{display:none}
@@ -236,9 +245,9 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radiu
   .fside{max-width:540px}
 }
 @media (max-width:640px){
-  .full .r-lg{width:23vw;height:23vw}.full .r-lg .knob{width:17vw;height:17vw}.full .r-lg svg{width:7vw;height:7vw}
-  .full .r-md{width:16.5vw;height:16.5vw}.full .r-md .knob{width:12vw;height:12vw}.full .r-md svg{width:5vw;height:5vw}
-  .full .r-sm .knob{width:10.5vw;height:10.5vw}.full .r-sm svg{width:5vw;height:5vw}
+  .full .r-lg{width:23vw;height:23vw}.full .r-lg .knob{width:17vw;height:17vw}.full .r-lg svg{width:7.5vw;height:7.5vw}
+  .full .r-md{width:16.5vw;height:16.5vw}.full .r-md .knob{width:12vw;height:12vw}.full .r-md svg{width:5.3vw;height:5.3vw}
+  .full .r-sm .knob{width:10.5vw;height:10.5vw}.full .r-sm svg{width:4.6vw;height:4.6vw}
   .full .controls{gap:2px;justify-content:space-between}
   .fside{padding:16px 14px}
   .full .meta .a{font-size:22px}.full .meta .t{font-size:17px}
@@ -259,7 +268,7 @@ html.tv body{font-size:18px}
 .tv header{padding-block:28px 14px;backdrop-filter:none;background:var(--stage-a)}
 .tv .brand{font-size:24px}.tv .brand .dot{width:40px;height:40px}
 .tv .search{height:54px}.tv .search input{font-size:18px}
-.tv .tbtn{width:54px;height:54px}.tv .tbtn svg{width:26px;height:26px}
+.tv .tbtn{width:54px;height:54px}.tv .tbtn svg{width:24px;height:24px}
 .tv .sleepchip{height:54px;font-size:18px}
 .tv .tabs{gap:12px;margin-top:18px;padding:6px}
 .tv .chip{height:46px;padding:0 22px;font-size:17px}
@@ -353,20 +362,20 @@ html.full-open .toast{bottom:max(24px,env(safe-area-inset-bottom,0px))}
     <linearGradient id="g-ico" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--ico-hi)"/><stop offset="1" style="stop-color:var(--ico-lo)"/></linearGradient>
     <linearGradient id="g-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--gold-hi)"/><stop offset="1" style="stop-color:var(--gold-lo)"/></linearGradient>
   </defs>
-  <symbol id="i-play" viewBox="0 0 24 24"><g transform="translate(-1.99 0)"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></g></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><g transform="translate(-0.99 0)"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></g></symbol>
   <symbol id="i-pause" viewBox="0 0 24 24"><rect x="5.5" y="4" width="4.5" height="16" rx="1.2"/><rect x="14" y="4" width="4.5" height="16" rx="1.2"/></symbol>
-  <symbol id="i-prev" viewBox="0 0 24 24"><g transform="translate(0.42 0)"><path d="M11.5 6.2v11.6a.8.8 0 0 1-1.25.66L2 12.66a.8.8 0 0 1 0-1.32l8.25-5.8a.8.8 0 0 1 1.25.66zm10 0v11.6a.8.8 0 0 1-1.25.66L12 12.66a.8.8 0 0 1 0-1.32l8.250-5.8a.8.8 0 0 1 1.25.66z"/></g></symbol>
-  <symbol id="i-next" viewBox="0 0 24 24"><g transform="translate(-0.42 0)"><path d="M12.5 6.2v11.6a.8.8 0 0 0 1.25.66L22 12.66a.8.8 0 0 0 0-1.32l-8.25-5.8a.8.8 0 0 0-1.25.66zm-10 0v11.6a.8.8 0 0 0 1.25.66L12 12.66a.8.8 0 0 0 0-1.32L3.75 5.54A.8.8 0 0 0 2.5 6.2z"/></g></symbol>
+  <symbol id="i-prev" viewBox="0 0 24 24"><g transform="translate(-0.28 0)"><path d="M11.5 6.2v11.6a.8.8 0 0 1-1.25.66L2 12.66a.8.8 0 0 1 0-1.32l8.25-5.8a.8.8 0 0 1 1.25.66zm10 0v11.6a.8.8 0 0 1-1.25.66L12 12.66a.8.8 0 0 1 0-1.32l8.250-5.8a.8.8 0 0 1 1.25.66z"/></g></symbol>
+  <symbol id="i-next" viewBox="0 0 24 24"><g transform="translate(0.28 0)"><path d="M12.5 6.2v11.6a.8.8 0 0 0 1.25.66L22 12.66a.8.8 0 0 0 0-1.32l-8.25-5.8a.8.8 0 0 0-1.25.66zm-10 0v11.6a.8.8 0 0 0 1.25.66L12 12.66a.8.8 0 0 0 0-1.32L3.75 5.54A.8.8 0 0 0 2.5 6.2z"/></g></symbol>
   <symbol id="i-repeat" viewBox="0 0 24 24"><g transform="translate(-1.1 0)"><path d="M12 4a8 8 0 0 1 7.4 5H22l-3.5 4.5L15 9h2.2A6 6 0 1 0 18 13.5h2.05A8 8 0 1 1 12 4z"/></g></symbol>
   <symbol id="i-shuffle" viewBox="0 0 24 24"><g transform="translate(0 0.9)"><path d="M17 3.5 21.5 7 17 10.5V8.2h-1.7a3 3 0 0 0-2.4 1.2L8.5 15.6A5 5 0 0 1 4.6 17.6H2.5v-2.2h2.1a3 3 0 0 0 2.4-1.2l4.4-6.2a5 5 0 0 1 3.9-2H17zM2.5 6.4h2.1a5 5 0 0 1 3.9 2l.9 1.3-1.3 1.9-1.3-1.9a3 3 0 0 0-2.4-1.1H2.5zm11.6 7.8 1.3-1.9.4.5a3 3 0 0 0 2.4 1.2H17v-2.3l4.5 3.5L17 18.7v-2.3h-1.2a5 5 0 0 1-3.9-2z"/></g></symbol>
   <symbol id="i-search" viewBox="0 0 24 24"><g transform="translate(0.1 0.1)"><path d="M10.5 3a7.5 7.5 0 0 1 6 12l4.3 4.3-1.5 1.5-4.3-4.3A7.5 7.5 0 1 1 10.5 3zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11z"/></g></symbol>
-  <symbol id="i-timer" viewBox="0 0 24 24"><g transform="translate(-1.24 0)"><path d="M14.5 2.5a9.5 9.5 0 1 0 7 15.9A8 8 0 0 1 14.5 2.5z"/></g></symbol>
+  <symbol id="i-timer" viewBox="0 0 24 24"><g transform="translate(0.26 0)"><path d="M14.5 2.5a9.5 9.5 0 1 0 7 15.9A8 8 0 0 1 14.5 2.5z"/></g></symbol>
   <symbol id="i-clock" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm0 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm1 3v4.6l3.4 2-1 1.7L11 12.7V7z"/></symbol>
-  <symbol id="i-gear" viewBox="0 0 24 24"><g transform="translate(0 1.3)"><path d="m13.8 2 .5 2.6a7.8 7.8 0 0 1 1.9 1.1l2.5-.9 1.8 3.1-2 1.7a8 8 0 0 1 0 2.2l2 1.7-1.8 3.1-2.5-.9a7.8 7.8 0 0 1-1.9 1.1l-.5 2.6h-3.6l-.5-2.6a7.8 7.8 0 0 1-1.9-1.1l-2.5.9-1.8-3.1 2-1.7a8 8 0 0 1 0-2.2l-2-1.7 1.8-3.1 2.5.9a7.8 7.8 0 0 1 1.9-1.1l.5-2.6zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></g></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M10.78 4.3 11.12 2.14 12.88 2.14 13.22 4.3 14.8 4.72 16.17 3.02 17.69 3.9 16.91 5.94 18.06 7.09 20.1 6.31 20.98 7.83 19.28 9.2 19.7 10.78 21.86 11.12 21.86 12.88 19.7 13.22 19.28 14.8 20.98 16.17 20.1 17.69 18.06 16.91 16.91 18.06 17.69 20.1 16.17 20.98 14.8 19.28 13.22 19.7 12.88 21.86 11.12 21.86 10.78 19.7 9.2 19.28 7.83 20.98 6.31 20.1 7.09 18.06 5.94 16.91 3.9 17.69 3.02 16.17 4.72 14.8 4.3 13.22 2.14 12.88 2.14 11.12 4.3 10.78 4.72 9.2 3.02 7.83 3.9 6.31 5.94 7.09 7.09 5.94 6.31 3.9 7.83 3.02 9.2 4.72zM12 8.9a3.1 3.1 0 1 0 0 6.2a3.1 3.1 0 1 0 0 -6.2z"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7z"/></symbol>
   <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></symbol>
-  <symbol id="i-heart" viewBox="0 0 24 24"><g transform="translate(0 0.6)"><path d="M12 20.5 10.6 19C5.4 14.4 2 11.3 2 7.6 2 4.6 4.4 2.3 7.3 2.3c1.7 0 3.4.8 4.7 2.1a6.4 6.4 0 0 1 4.7-2.1c2.9 0 5.3 2.3 5.3 5.3 0 3.7-3.4 6.8-8.6 11.4z"/></g></symbol>
-  <symbol id="i-heart-o" viewBox="0 0 24 24"><g transform="translate(0 0.6)"><path d="M16.7 2.3c2.9 0 5.3 2.3 5.3 5.3 0 3.7-3.4 6.8-8.6 11.4L12 20.5 10.6 19C5.4 14.4 2 11.3 2 7.6 2 4.6 4.4 2.3 7.3 2.3c1.7 0 3.4.8 4.7 2.1a6.4 6.4 0 0 1 4.7-2.1zM12 18l.1-.1C17 13.6 20 10.9 20 7.6c0-1.9-1.4-3.3-3.3-3.3-1.4 0-2.800.9-3.3 2.2h-2.8C10.1 5.2 8.7 4.3 7.3 4.3 5.4 4.3 4 5.7 4 7.6c0 3.3 3 6 7.9 10.3z"/></g></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><g transform="translate(0 1.4)"><path d="M12 20.5 10.6 19C5.4 14.4 2 11.3 2 7.6 2 4.6 4.4 2.3 7.3 2.3c1.7 0 3.4.8 4.7 2.1a6.4 6.4 0 0 1 4.7-2.1c2.9 0 5.3 2.3 5.3 5.3 0 3.7-3.4 6.8-8.6 11.4z"/></g></symbol>
+  <symbol id="i-heart-o" viewBox="0 0 24 24"><g transform="translate(0 1.4)"><path d="M16.7 2.3c2.9 0 5.3 2.3 5.3 5.3 0 3.7-3.4 6.8-8.6 11.4L12 20.5 10.6 19C5.4 14.4 2 11.3 2 7.6 2 4.6 4.4 2.3 7.3 2.3c1.7 0 3.4.8 4.7 2.1a6.4 6.4 0 0 1 4.7-2.1zM12 18l.1-.1C17 13.6 20 10.9 20 7.6c0-1.9-1.4-3.3-3.3-3.3-1.4 0-2.800.9-3.3 2.2h-2.8C10.1 5.2 8.7 4.3 7.3 4.3 5.4 4.3 4 5.7 4 7.6c0 3.3 3 6 7.9 10.3z"/></g></symbol>
   <symbol id="i-copy" viewBox="0 0 24 24"><path d="M8 3h11a2 2 0 0 1 2 2v12h-2V5H8zM5 7h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2zm0 2v10h10V9z"/></symbol>
   <symbol id="i-link" viewBox="0 0 24 24"><g transform="translate(-0.59 0.55)"><path d="M10.6 13.4a1 1 0 0 1 0-1.4l3.5-3.5a1 1 0 1 1 1.4 1.4L12 13.4a1 1 0 0 1-1.4 0zM8 21a5 5 0 0 1-3.5-8.5l2.8-2.8 1.4 1.4-2.8 2.8a3 3 0 1 0 4.2 4.2l2.8-2.8 1.4 1.4-2.8 2.8A5 5 0 0 1 8 21zm9.3-7.3-1.4-1.4 2.8-2.8a3 3 0 1 0-4.2-4.2l-2.8 2.8-1.4-1.4 2.8-2.8a5 5 0 1 1 7 7z"/></g></symbol>
   <symbol id="i-edit" viewBox="0 0 24 24"><path d="M3 17.3V21h3.7l11-11-3.7-3.7zM20.7 7a1 1 0 0 0 0-1.4l-2.3-2.3a1 1 0 0 0-1.4 0l-1.8 1.8 3.7 3.7z"/></symbol>
@@ -374,6 +383,8 @@ html.full-open .toast{bottom:max(24px,env(safe-area-inset-bottom,0px))}
   <symbol id="i-vol" viewBox="0 0 24 24"><g transform="translate(-0.06 0)"><path d="M3 9h4l5-4v14l-5-4H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></g></symbol>
   <symbol id="i-down" viewBox="0 0 24 24"><g transform="translate(0 -0.9)"><path d="M5.6 8.3 12 14.7l6.4-6.4 1.4 1.4L12 17.5 4.2 9.7z"/></g></symbol>
   <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 4h6v2H6v4H4zm10 0h6v6h-2V6h-4zM4 14h2v4h4v2H4zm14 0h2v6h-6v-2h4z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M9.5 16.2 5.3 12l-1.4 1.4 5.6 5.6L20.1 8.4 18.7 7z"/></symbol>
+  <symbol id="i-caret" viewBox="0 0 24 24"><path d="M6 9h12l-6 7z"/></symbol>
   <symbol id="i-shrink" viewBox="0 0 24 24"><path d="M8 4h2v6H4V8h4zm6 0h2v4h4v2h-6zM4 14h6v6H8v-4H4zm10 0h6v2h-4v4h-2z"/></symbol>
 </svg>
 
@@ -885,18 +896,42 @@ function pollIcy(){
 }
 
 /* rendering */
+function listOptions(){
+  const favN = Object.keys(S.favs).length;
+  return [['all', 'Все станции', S.custom.length + S.stations.length], ['fav', 'Избранные', favN],
+    ...(S.custom.length ? [['mine', 'Мои', S.custom.length]] : []), ['bells', 'Рок · RadioBells', S.bells.length]];
+}
 function renderTabs(){
   const t = $('tabs');
-  const favN = Object.keys(S.favs).length;
-  let h = `<button class="chip" data-tab="all" aria-pressed="${S.tab==='all'}">Все</button>
-           <button class="chip" data-tab="fav" aria-pressed="${S.tab==='fav'}">Избранные${favN ? ' · ' + favN : ''}</button>`;
-  if (S.custom.length) h += `<button class="chip" data-tab="mine" aria-pressed="${S.tab==='mine'}">Мои · ${S.custom.length}</button>`;
-  h += `<button class="chip" data-tab="bells" aria-pressed="${S.tab==='bells'}">Рок · RadioBells${S.bells.length ? ' · ' + S.bells.length : ''}</button>`;
-  h += `<span class="chip sep">|</span>`;
-  h += GENRES.map(([k, n]) => `<button class="chip" data-tag="${k}" aria-pressed="${S.tab==='all' && S.tag===k}">${n}</button>`).join('');
-  const focusKey = document.activeElement && t.contains(document.activeElement) ? (document.activeElement.dataset.tab ?? 'g:' + document.activeElement.dataset.tag) : null;
-  t.innerHTML = h;
-  if (focusKey !== null){ const el = focusKey.startsWith('g:') ? t.querySelector(`[data-tag="${focusKey.slice(2)}"]`) : t.querySelector(`[data-tab="${focusKey}"]`); el?.focus({ preventScroll: true }); }
+  const lst = listOptions().find(o => o[0] === S.tab), gen = GENRES.find(g => g[0] === S.tag);
+  const listLbl = S.tab === 'all' ? 'Все' : lst ? lst[1] : 'Все';
+  const genLbl = S.tag && gen ? gen[1] : 'Жанры';
+  const open = !$('menu').hidden && $('menu').dataset.picker;
+  const focusKey = document.activeElement && t.contains(document.activeElement) ? document.activeElement.dataset.pick : null;
+  t.innerHTML = `<button class="chip pick" data-pick="list" aria-haspopup="true" aria-expanded="${open === 'list'}" aria-pressed="${S.tab !== 'all' || !S.tag}">${esc(listLbl)}<svg><use href="#i-caret"/></svg></button>
+    <button class="chip pick" data-pick="genre" aria-haspopup="true" aria-expanded="${open === 'genre'}" aria-pressed="${!!S.tag && S.tab === 'all'}">${esc(genLbl)}<svg><use href="#i-caret"/></svg></button>`;
+  if (focusKey) t.querySelector(`[data-pick="${focusKey}"]`)?.focus({ preventScroll: true });
+}
+function openPicker(btn){
+  const kind = btn.dataset.pick, m = $('menu');
+  if (!m.hidden && m.dataset.picker === kind) { closeMenu(); return; }
+  const items = kind === 'list' ? listOptions().map(([k, n, c]) => ({ k, n, c, on: S.tab === k }))
+    : GENRES.map(([k, n]) => ({ k, n, on: S.tab === 'all' && S.tag === k }));
+  menuReturn = btn;
+  m.className = 'menu picker'; m.dataset.picker = kind;
+  m.innerHTML = items.map(i => `<button role="menuitemradio" aria-checked="${i.on}" data-k="${esc(i.k)}"><svg><use href="#i-check"/></svg>${esc(i.n)}${i.c ? `<small>${i.c}</small>` : ''}</button>`).join('');
+  m.hidden = false;
+  const r = btn.getBoundingClientRect(), mr = m.getBoundingClientRect();
+  m.style.left = Math.max(8, Math.min(r.left, innerWidth - mr.width - 8)) + 'px';
+  m.style.top = (r.bottom + 6) + 'px';
+  renderTabs();
+  (m.querySelector('[aria-checked="true"]') || m.querySelector('button')).focus({ preventScroll: true });
+  m.onclick = e => { const b = e.target.closest('button'); if (!b) return; const k = b.dataset.k;
+    closeMenu();
+    if (kind === 'list') { S.tab = k; if (k === 'all') S.tag = ''; render(); }
+    else { S.tab = 'all'; if (S.tag !== k) { S.tag = k; S.srcActive === 'fmplay' ? render() : fetchStations(); } else render(); }
+    window.scrollTo({ top: 0 });
+  };
 }
 function logoHTML(st){
   if (S.set.logos && st.logo) return `<img src="${esc(st.logo)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'ini',textContent:'${esc(initials(st.name)).replace(/'/g,'')}'}))">`;
@@ -1102,7 +1137,7 @@ function toggleFav(st){
 let menuReturn = null, okGuard = false;
 function openMenu(st, x, y, kbd){
   if (!st) return;
-  const m = $('menu'); const fav = !!S.favs[st.id];
+  const m = $('menu'); const fav = !!S.favs[st.id]; m.className = 'menu'; delete m.dataset.picker;
   menuReturn = document.activeElement;
   m.innerHTML = `
     <button data-a="play"><svg><use href="#i-play"/></svg>Слушать</button>
@@ -1125,10 +1160,10 @@ function openMenu(st, x, y, kbd){
     if (a === 'del'){ S.custom = S.custom.filter(s => s.id !== st.id); delete S.favs[st.id]; save(); render(); toast(`Станция ${st.name} удалена`); }
   };
 }
-function closeMenu(restore = true){ if ($('menu').hidden) return; $('menu').hidden = true;
+function closeMenu(restore = true){ if ($('menu').hidden) return; $('menu').hidden = true; if ($('menu').dataset.picker) { delete $('menu').dataset.picker; renderTabs(); }
   if (restore && menuReturn && document.contains(menuReturn)) menuReturn.focus({ preventScroll: true }); }
-document.addEventListener('click', e => { if (!e.target.closest('#menu') && !e.target.closest('[data-more],[data-act="menu"]')) closeMenu(false); });
-document.addEventListener('scroll', () => closeMenu(false), true);
+document.addEventListener('click', e => { if (!e.target.closest('#menu') && !e.target.closest('[data-more],[data-act="menu"],[data-pick]')) closeMenu(false); });
+document.addEventListener('scroll', e => { if (e.target !== $('menu')) closeMenu(false); }, true);
 
 /* cards */
 function activateCard(c, openBig){
@@ -1160,11 +1195,7 @@ let lpT; $('grid').addEventListener('touchstart', e => { const c = e.target.clos
   lpT = setTimeout(() => { c.dataset.lp = 1; openMenu(findSt(c.dataset.id), t.clientX, t.clientY); navigator.vibrate?.(15); }, 550); }, { passive: true });
 ['touchend','touchmove','touchcancel'].forEach(ev => $('grid').addEventListener(ev, () => clearTimeout(lpT), { passive: true }));
 
-$('tabs').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
-  if (b.dataset.tab){ S.tab = b.dataset.tab; render(); }
-  else if ('tag' in b.dataset){ S.tab = 'all'; if (S.tag !== b.dataset.tag){ S.tag = b.dataset.tag; S.srcActive === 'fmplay' ? render() : fetchStations(); } else render(); }
-});
+$('tabs').addEventListener('click', e => { const b = e.target.closest('[data-pick]'); if (b) openPicker(b); });
 $('q').addEventListener('input', e => { S.q = e.target.value.trim(); render(); });
 $('q').addEventListener('keydown', e => { if (e.key === 'Enter') { e.target.blur(); if (isTV()) $('grid').querySelector('.card')?.focus(); } });
 
