@@ -69,8 +69,13 @@ public class MainActivity extends Activity {
         s.setAllowFileAccessFromFileURLs(true);
         s.setAllowUniversalAccessFromFileURLs(true);
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-        s.setLoadWithOverviewMode(true);
+        // Масштаб 1:1 по ширине экрана: без автоподгонки и зума, иначе страница «раздувается» при повороте
+        s.setLoadWithOverviewMode(false);
         s.setUseWideViewPort(true);
+        s.setSupportZoom(false);
+        s.setBuiltInControls(false);
+        s.setDisplayZoomControls(false);
+        s.setTextZoom(100);
         s.setUserAgentString(s.getUserAgentString() + " RadioNetApp/1" + (tv ? " AndroidTV" : ""));
 
         web.addJavascriptInterface(new Bridge(), "Android");

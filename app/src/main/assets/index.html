@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0e6b8d">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -40,6 +40,8 @@
 }
 *{box-sizing:border-box}
 html,body{height:100%}
+html,body{max-width:100%;overflow-x:clip}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html{scrollbar-color:var(--panel-hi) transparent}
 body{margin:0;font-family:var(--font-ui);color:var(--ink);font-size:14px;
   background:linear-gradient(160deg,var(--stage-a),var(--stage-b)) fixed;background-color:var(--stage-b);
@@ -92,7 +94,8 @@ header{position:sticky;top:0;z-index:20;padding-block:max(14px,env(safe-area-ins
 main{padding-block:10px calc(var(--dockh,240px) + 24px)}
 .status{color:var(--on-stage);opacity:.85;padding:28px 4px;text-align:center;font-weight:500}
 .status button{margin-top:12px;background:var(--gold);color:var(--gold-ink);padding:9px 18px;border-radius:999px;font-weight:700}
-.grid{display:grid;gap:12px;grid-template-columns:repeat(var(--cols,auto-fill),minmax(150px,1fr))}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(var(--cols,auto-fill),minmax(var(--cmin,150px),1fr))}
+.grid.fixed{--cmin:0px!important}
 .card{position:relative;background:var(--panel);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:10px;text-align:left;box-shadow:0 3px 10px var(--shadow);transition:transform .15s,background .15s,box-shadow .15s;min-width:0;cursor:pointer;
   scroll-margin:150px 0 calc(var(--dockh,240px) + 20px)}
 @media (hover:hover){.card:hover{background:var(--panel-2)} .logo:hover::before{opacity:1}}
@@ -111,7 +114,9 @@ main{padding-block:10px calc(var(--dockh,240px) + 24px)}
 .logo::before{content:"";position:absolute;inset:0;background:radial-gradient(circle,rgba(0,0,0,.45) 0 22%,transparent 23%),
   url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f3c98e'%3E%3Cpath d='M4 4h6v2H6v4H4zm10 0h6v6h-2V6h-4zM4 14h2v4h4v2H4zm14 0h2v6h-6v-2h4z'/%3E%3C/svg%3E") center/20% no-repeat;opacity:0;transition:opacity .15s;pointer-events:none;z-index:1}
 .logo img{width:72%;height:72%;object-fit:contain}
-.logo .ini{font-weight:800;font-size:28px;color:var(--gold);letter-spacing:.04em}
+.logo{container-type:inline-size}
+.logo .ini{font-weight:800;font-size:clamp(12px,26cqi,28px);color:var(--gold);letter-spacing:.04em}
+.card{container-type:inline-size}
 .card .nm{font-weight:700;font-size:14px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:2.5em}
 .card .sub{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:-6px}
 .card .more{position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:50%;background:color-mix(in srgb,var(--panel) 85%,transparent);display:grid;place-items:center;z-index:2}
@@ -127,7 +132,7 @@ main{padding-block:10px calc(var(--dockh,240px) + 24px)}
 .cover-wrap{position:relative;width:200px;aspect-ratio:1;max-width:100%;flex:none}
 .vinyl{position:absolute;top:6%;bottom:6%;aspect-ratio:1;right:0;border-radius:50%;
   background:repeating-radial-gradient(circle,#1b1d21 0 2px,#24272c 2px 3px);box-shadow:inset 0 0 0 1px #000, 0 2px 6px rgba(0,0,0,.5);
-  transform:translateX(12%);transition:transform .7s cubic-bezier(.3,1.3,.5,1)}
+  transform:translateX(calc(var(--vdir,1) * 12%));transition:transform .7s cubic-bezier(.3,1.3,.5,1)}
 .vinyl::after{content:"";position:absolute;inset:34%;border-radius:50%;opacity:.95;
   background:radial-gradient(circle at 50% 24%,rgba(20,14,6,.55) 0 7%,transparent 8%),linear-gradient(90deg,transparent 47%,rgba(20,14,6,.35) 47% 53%,transparent 53%) 50% 70%/100% 22% no-repeat,radial-gradient(circle,#0e0f11 0 11%,var(--gold-lo) 12% 15%,var(--gold) 16% 100%)}
 .vinyl::before{content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;background:conic-gradient(from 20deg,transparent 0 10%,rgba(255,255,255,.08) 14%,transparent 20% 60%,rgba(255,255,255,.06) 64%,transparent 70%)}
@@ -136,7 +141,7 @@ main{padding-block:10px calc(var(--dockh,240px) + 24px)}
 .arow .a{min-width:0}
 .avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;flex:none;background:var(--groove);box-shadow:0 0 0 2px var(--gold),0 4px 10px rgba(0,0,0,.5)}
 .tv .avatar{width:64px;height:64px}
-.playing .vinyl{transform:translateX(30%);animation:spin 3.2s linear infinite}
+.playing .vinyl{transform:translateX(calc(var(--vdir,1) * 30%));animation:spin 3.2s linear infinite}
 @keyframes spin{from{rotate:0deg}to{rotate:360deg}}
 .cover{position:absolute;inset:0;border-radius:4px;overflow:hidden;box-shadow:4px 6px 14px rgba(0,0,0,.55);
   background:
@@ -204,7 +209,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radiu
   .player .vinyl{display:none}
   .brand span{display:none}
   .tools .hide-sm{display:none}
-  .grid{gap:10px;grid-template-columns:repeat(var(--cols,auto-fill),minmax(130px,1fr))}
+  .grid{gap:10px;--cmin:130px}
 }
 
 /* phone in landscape (short screen): compact one-row player, tighter header */
@@ -239,9 +244,11 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radiu
 .fside{width:100%;max-width:560px;background:var(--panel);border-radius:26px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 0 0 1px var(--edge),0 18px 40px rgba(0,0,0,.4)}
 .fextra{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
 .fextra .tbtn{box-shadow:none;background:var(--panel-2);width:44px;height:44px}
-@media (min-aspect-ratio:5/4) and (min-width:700px){
+@media (min-aspect-ratio:5/4) and (min-width:700px),(orientation:landscape) and (min-aspect-ratio:4/3){
   .fbody{flex-direction:row;gap:7vw}
-  .full .cover-wrap{width:min(34vw,56vh);margin-left:calc(min(34vw,56vh) * .26)}
+  .full .cover-wrap{width:min(34vw,56vh);margin-left:calc(min(34vw,56vh) * .3)}
+  .full{--vdir:-1}
+  .full .vinyl{right:auto;left:0}
   .fside{max-width:540px}
 }
 @media (max-width:640px){
@@ -272,7 +279,7 @@ html.tv body{font-size:18px}
 .tv .sleepchip{height:54px;font-size:18px}
 .tv .tabs{gap:12px;margin-top:18px;padding:6px}
 .tv .chip{height:46px;padding:0 22px;font-size:17px}
-.tv .grid{gap:24px;grid-template-columns:repeat(var(--cols,auto-fill),minmax(210px,1fr))}
+.tv .grid{gap:24px;--cmin:210px}
 .tv .card{padding:14px;scroll-margin:200px 0 calc(var(--dockh,240px) + 30px)}
 .tv .card .nm{font-size:18px}.tv .card .sub{font-size:14px}
 .tv .card .more{display:none}
@@ -353,6 +360,8 @@ html.full-open .toast{bottom:max(24px,env(safe-area-inset-bottom,0px))}
 .knob,.tbtn,.card .more{display:grid;place-items:center;line-height:0;padding:0}
 .knob>svg,.tbtn>svg,.card .more>svg{margin:auto}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+/* small cards (many columns): text and badges shrink with the card, menu via long press */
+@container (max-width:120px){.card{padding:8px;gap:8px;border-radius:12px}.card .more{display:none}.card .fav{top:12px;left:12px}.card .nm{font-size:12px}.card .sub{font-size:11px}.card .chk{left:12px}}
 </style>
 </head>
 <body>
@@ -815,14 +824,15 @@ function rollVinyl(){
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   $$('.vinyl').forEach(v => {
     if (!v.getClientRects().length || !v.animate) return;
-    const playing = !!v.closest('.playing'), end = playing ? 30 : 12, left = v.closest('#full') ? -46 : -20;
+    const dir = parseFloat(getComputedStyle(v).getPropertyValue('--vdir')) || 1;
+    const playing = !!v.closest('.playing'), end = (playing ? 30 : 12) * dir, left = (v.closest('#full') ? -46 : -20) * dir, over = 5 * dir, rot = dir;
     v.getAnimations().filter(a => a.id === 'roll').forEach(a => a.cancel());
     v.classList.add('rolling');
     const a = v.animate([
       { transform: `translateX(${end}%) rotate(0deg)`, easing: 'cubic-bezier(.45,0,.2,1)' },
-      { transform: `translateX(${left}%) rotate(-200deg)`, offset: .42 },
-      { transform: `translateX(${left}%) rotate(-200deg)`, offset: .5, easing: 'cubic-bezier(.45,0,.2,1)' },
-      { transform: `translateX(${end + 5}%) rotate(25deg)`, offset: .9, easing: 'ease-out' },
+      { transform: `translateX(${left}%) rotate(${-200 * rot}deg)`, offset: .42 },
+      { transform: `translateX(${left}%) rotate(${-200 * rot}deg)`, offset: .5, easing: 'cubic-bezier(.45,0,.2,1)' },
+      { transform: `translateX(${end + over}%) rotate(${25 * rot}deg)`, offset: .9, easing: 'ease-out' },
       { transform: `translateX(${end}%) rotate(0deg)` },
     ], { duration: 1900, easing: 'linear', id: 'roll' });
     a.id = 'roll';
@@ -947,7 +957,7 @@ function render(failed){
   S.view = list;
   renderListbar(list);
   const st = $('status'), g = $('grid');
-  g.style.setProperty('--cols', S.set.cols === 'auto' ? 'auto-fill' : S.set.cols);
+  g.style.setProperty('--cols', S.set.cols === 'auto' ? 'auto-fill' : S.set.cols); g.classList.toggle('fixed', S.set.cols !== 'auto');
   if (failed && S.tab === 'all' && !S.custom.length){
     st.hidden = false; st.innerHTML = `Не удалось загрузить каталог станций.<br>Проверьте подключение к интернету и попробуйте ещё раз.<br><button id="retry">Повторить</button>`;
     $('retry').onclick = fetchStations; g.innerHTML = ''; if (isTV()) $('retry').focus(); return;
