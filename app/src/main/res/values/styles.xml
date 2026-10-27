@@ -8,5 +8,7 @@
         <item name="android:colorAccent">#FFF3C98E</item>
         <item name="android:statusBarColor">#FF0E6B8D</item>
         <item name="android:navigationBarColor">#FF07344B</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowActionBar">false</item>
     </style>
 </resources>

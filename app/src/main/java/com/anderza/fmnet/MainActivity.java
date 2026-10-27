@@ -109,7 +109,7 @@ public class MainActivity extends Activity {
         if (savedInstanceState != null) web.restoreState(savedInstanceState);
         else web.loadUrl(START_URL);
 
-        if (tv) goImmersive();
+        goImmersive();
         askNotificationPermission();
         handleIntent(getIntent());
     }
@@ -249,9 +249,15 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        goImmersive();
+    }
+
+    @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
-        if (hasFocus && tv) goImmersive();
+        if (hasFocus) goImmersive();
     }
 
     @Override
