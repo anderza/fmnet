@@ -1,0 +1,9 @@
+{
+  "name": "radionet",
+  "productName": "RadioNet",
+  "version": "1.0.6",
+  "description": "RadioNet — радиоплеер для Windows",
+  "main": "main.js",
+  "author": "anderza",
+  "license": "UNLICENSED"
+}
