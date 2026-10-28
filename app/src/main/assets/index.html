@@ -360,8 +360,29 @@ html.full-open .toast{bottom:max(24px,env(safe-area-inset-bottom,0px))}
 .knob,.tbtn,.card .more{display:grid;place-items:center;line-height:0;padding:0}
 .knob>svg,.tbtn>svg,.card .more>svg{margin:auto}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
-/* small cards (many columns): text and badges shrink with the card, menu via long press */
-@container (max-width:120px){.card{padding:8px;gap:8px;border-radius:12px}.card .more{display:none}.card .fav{top:12px;left:12px}.card .nm{font-size:12px}.card .sub{font-size:11px}.card .chk{left:12px}}
+/* square tiles packed tightly: logo fills the tile, name and track over a dark fade at the bottom */
+.grid,.tv .grid{gap:3px}
+.tv .grid{gap:6px}
+.card{aspect-ratio:1;padding:0;gap:0;border-radius:6px;overflow:hidden;justify-content:flex-end;box-shadow:none;background:var(--groove);scroll-margin:150px 0 calc(var(--dockh,240px) + 8px)}
+.card .logo::before{display:none}
+.card .logo{position:absolute;inset:0;max-width:none;aspect-ratio:auto;border-radius:0;background:var(--groove)}
+.card .logo img{width:62%;height:62%;margin-bottom:14%}
+.card .logo .ini{margin-bottom:14%}
+.card .nm,.card .sub{position:relative;z-index:1;padding:0 8px;pointer-events:none}
+.card .nm{min-height:0;display:block;white-space:nowrap;font-size:13px;padding-top:22px;background:linear-gradient(transparent,rgba(0,0,0,.72) 60%);color:#f1f3f6;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.card .sub{margin-top:0;padding-bottom:7px;font-size:11px;color:#b9c0ca;background:rgba(0,0,0,.72)}
+.card .more{top:5px;right:5px;width:26px;height:26px}
+.card .more svg{width:16px;height:16px}
+.card .fav{top:7px;left:7px}
+.card .chk{left:6px;top:6px;bottom:auto}
+.card .fav~.chk{top:30px}
+.card.cur{box-shadow:none}
+.card.cur::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 2px var(--gold);z-index:3;pointer-events:none}
+.eq{top:8px;right:36px;bottom:auto}
+.tv .card .nm{font-size:16px}.tv .card .sub{font-size:13px}
+.tv .card:focus{transform:scale(1.06)}
+@media (hover:hover){.card:hover{background:var(--groove)}.card:hover .logo{filter:brightness(1.12)}}
+@container (max-width:110px){.card .more{display:none}.card .sub{display:none}.card .nm{font-size:11px;padding:16px 5px 5px}.eq{right:6px}.card .chk{font-size:9px;padding:1px 5px}}
 </style>
 </head>
 <body>
@@ -969,7 +990,7 @@ function render(failed){
   const tv = isTV();
   g.innerHTML = list.map(s => `
     <div class="card${S.cur && S.cur.id === s.id ? ' cur' : ''}${S.check[s.id] === 'dead' ? ' dead' : ''}" role="button" tabindex="0" data-id="${esc(s.id)}" aria-label="${esc(s.name)}">
-      <div class="logo" title="Открыть плеер на весь экран">${logoHTML(s)}${S.cur && S.cur.id === s.id && S.wantPlay ? '<div class="eq"><i></i><i></i><i></i></div>' : ''}</div>
+      <div class="logo">${logoHTML(s)}${S.cur && S.cur.id === s.id && S.wantPlay ? '<div class="eq"><i></i><i></i><i></i></div>' : ''}</div>
       ${S.favs[s.id] ? '<span class="fav"><svg><use href="#i-heart"/></svg></span>' : ''}
       <button class="more" data-more="${esc(s.id)}" aria-label="Меню станции"${tv ? ' tabindex="-1"' : ''}><svg><use href="#i-dots"/></svg></button>
       ${S.check[s.id] ? `<span class="chk ${S.check[s.id]}">${S.check[s.id] === 'ok' ? '● в эфире' : S.check[s.id] === 'dead' ? 'нет потока' : 'проверка…'}</span>` : ''}
@@ -1186,7 +1207,7 @@ $('grid').addEventListener('click', e => {
   if (more){ e.stopPropagation(); const r = more.getBoundingClientRect(); openMenu(findSt(more.dataset.more), r.left - 200, r.bottom + 6); return; }
   const c = e.target.closest('.card'); if (!c) return;
   if (c.dataset.lp) { delete c.dataset.lp; return; }
-  activateCard(c, !!e.target.closest('.logo') || isTV());
+  activateCard(c, isTV());
 });
 $('grid').addEventListener('keydown', e => {
   const c = e.target.closest('.card'); if (!c || !(e.key === 'Enter' || e.key === ' ')) return;
