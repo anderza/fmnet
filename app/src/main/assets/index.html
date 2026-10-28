@@ -360,8 +360,29 @@ html.full-open .toast{bottom:max(24px,env(safe-area-inset-bottom,0px))}
 .knob,.tbtn,.card .more{display:grid;place-items:center;line-height:0;padding:0}
 .knob>svg,.tbtn>svg,.card .more>svg{margin:auto}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
-/* small cards (many columns): text and badges shrink with the card, menu via long press */
-@container (max-width:120px){.card{padding:8px;gap:8px;border-radius:12px}.card .more{display:none}.card .fav{top:12px;left:12px}.card .nm{font-size:12px}.card .sub{font-size:11px}.card .chk{left:12px}}
+/* square tiles packed tightly: logo fills the tile, name and track over a dark fade at the bottom */
+.grid,.tv .grid{gap:3px}
+.tv .grid{gap:6px}
+.card{aspect-ratio:1;padding:0;gap:0;border-radius:6px;overflow:hidden;justify-content:flex-end;box-shadow:none;background:var(--groove);scroll-margin:150px 0 calc(var(--dockh,240px) + 8px)}
+.card .logo::before{display:none}
+.card .logo{position:absolute;inset:0;max-width:none;aspect-ratio:auto;border-radius:0;background:var(--groove)}
+.card .logo img{width:62%;height:62%;margin-bottom:14%}
+.card .logo .ini{margin-bottom:14%}
+.card .nm,.card .sub{position:relative;z-index:1;padding:0 8px;pointer-events:none}
+.card .nm{min-height:0;display:block;white-space:nowrap;font-size:13px;padding-top:22px;background:linear-gradient(transparent,rgba(0,0,0,.72) 60%);color:#f1f3f6;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.card .sub{margin-top:0;padding-bottom:7px;font-size:11px;color:#b9c0ca;background:rgba(0,0,0,.72)}
+.card .more{top:5px;right:5px;width:26px;height:26px}
+.card .more svg{width:16px;height:16px}
+.card .fav{top:7px;left:7px}
+.card .chk{left:6px;top:6px;bottom:auto}
+.card .fav~.chk{top:30px}
+.card.cur{box-shadow:none}
+.card.cur::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 2px var(--gold);z-index:3;pointer-events:none}
+.eq{top:8px;right:36px;bottom:auto}
+.tv .card .nm{font-size:16px}.tv .card .sub{font-size:13px}
+.tv .card:focus{transform:scale(1.06)}
+@media (hover:hover){.card:hover{background:var(--groove)}.card:hover .logo{filter:brightness(1.12)}}
+@container (max-width:110px){.card .more{display:none}.card .sub{display:none}.card .nm{font-size:11px;padding:16px 5px 5px}.eq{right:6px}.card .chk{font-size:9px;padding:1px 5px}}
 </style>
 </head>
 <body>
@@ -571,7 +592,7 @@ function initials(name){ const w = String(name).replace(/[^\p{L}\p{N} ]/gu,' ').
 function fmt(sec){ sec = Math.max(0, Math.floor(sec)); const h = Math.floor(sec/3600), m = Math.floor(sec%3600/60), s = sec%60;
   return h ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}` : `${m}:${String(s).padStart(2,'0')}`; }
 function subline(st){ const parts = []; if (st.tags) parts.push(st.tags.split(',').slice(0,2).join(', '));
-  if (st.bitrate) parts.push(st.bitrate + ' Кбит/с'); if (st.custom) parts.push('Своя станция'); return parts.join(' · ') || 'Прямой эфир'; }
+  if (st.bitrate) parts.push(st.bitrate + ' Кбит/с'); if (isHls(st.url, st.hls)) parts.push('HLS'); if (st.custom) parts.push('Своя станция'); return parts.join(' · ') || 'Прямой эфир'; }
 const setText = (k, v) => $$(`[data-b="${k}"]`).forEach(e => { if (e.textContent !== v) e.textContent = v; });
 const setIco = (k, ico) => $$(`[data-b="${k}"]`).forEach(e => e.innerHTML = `<use href="#i-${ico}"/>`);
 let toastT;
@@ -696,8 +717,8 @@ async function fetchStations(){
       const r = await fetch(`${base}/json/stations/search?${p}`, { signal: ctl.signal }); clearTimeout(to);
       if (!r.ok) continue;
       const data = await r.json(); const seen = new Set();
-      S.stations = data.filter(x => x.url_resolved && !x.hls && !seen.has(x.name.trim().toLowerCase()) && seen.add(x.name.trim().toLowerCase()))
-        .map(x => ({ id: x.stationuuid, name: x.name.trim(), url: x.url_resolved, logo: x.favicon || '', tags: x.tags || '', bitrate: x.bitrate || 0 }));
+      S.stations = data.filter(x => x.url_resolved && !seen.has(x.name.trim().toLowerCase()) && seen.add(x.name.trim().toLowerCase()))
+        .map(x => ({ id: x.stationuuid, name: x.name.trim(), url: x.url_resolved, logo: x.favicon || '', tags: x.tags || '', bitrate: x.bitrate || 0, hls: !!x.hls }));
       render(); return;
     }catch(e){}
   }
@@ -717,16 +738,46 @@ function loadBellsCache(){ try { const d = JSON.parse(localStorage.getItem(BELLS
 function saveBellsCache(){ try { localStorage.setItem(BELLS_KEY, JSON.stringify({ list: S.bells, missing: S.bellsMissing, at: S.bellsAt })); } catch(e){} }
 
 /* stream probe: true when the browser can actually start decoding the stream */
-function probe(url, ms = 10000){
+function probe(url, ms = 10000, hlsFlag = false){
   return new Promise(res => {
     const a = new Audio(); let done = false;
-    const fin = ok => { if (done) return; done = true; clearTimeout(t); a.removeAttribute('src'); try { a.load(); } catch(e){} res(ok); };
+    const fin = ok => { if (done) return; done = true; clearTimeout(t); detachSrc(a); res(ok); };
     const t = setTimeout(() => fin(false), ms);
     a.muted = true; a.preload = 'auto';
     a.addEventListener('canplay', () => fin(true)); a.addEventListener('loadeddata', () => fin(true));
     a.addEventListener('error', () => fin(false));
-    try { a.src = url; a.load(); } catch(e){ fin(false); }
+    attachSrc(a, url, hlsFlag).then(() => { try { if (!a._hls) a.load(); } catch(e){ fin(false); } }, () => fin(false));
   });
+}
+
+/* HLS (.m3u8): native where the system plays it, otherwise hls.js (bundled next to the page, CDN as a fallback) */
+const isHls = (url, flag) => !!flag || /\.m3u8(\?|#|$)/i.test(String(url || ''));
+const nativeHls = () => { try { return !!document.createElement('audio').canPlayType('application/vnd.apple.mpegurl'); } catch(e){ return false; } };
+let hlsLoad = null;
+function loadHls(){
+  if (window.Hls) return Promise.resolve(window.Hls);
+  if (hlsLoad) return hlsLoad;
+  const add = src => new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = src; sc.onload = () => window.Hls ? ok(window.Hls) : no(); sc.onerror = no; document.head.appendChild(sc); });
+  hlsLoad = add('hls.light.min.js').catch(() => add('https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.20/hls.light.min.js')).catch(e => { hlsLoad = null; throw e; });
+  return hlsLoad;
+}
+function detachSrc(el){
+  if (el._hls) { try { el._hls.destroy(); } catch(e){} el._hls = null; }
+  el.removeAttribute('src'); try { el.load(); } catch(e){}
+}
+async function attachSrc(el, url, hlsFlag){
+  if (el._hls) { try { el._hls.destroy(); } catch(e){} el._hls = null; }
+  if (!isHls(url, hlsFlag) || nativeHls()) { el.src = url; return; }
+  const Hls = await loadHls();
+  if (!Hls.isSupported()) { el.src = url; return; }
+  const h = new Hls({ enableWorker: true, lowLatencyMode: false, maxBufferLength: 30, manifestLoadingMaxRetry: 2, levelLoadingMaxRetry: 2, fragLoadingMaxRetry: 3 });
+  el._hls = h;
+  h.on(Hls.Events.ERROR, (ev, d) => {
+    if (!d.fatal || el._hls !== h) return;
+    if (d.type === Hls.ErrorTypes.MEDIA_ERROR) { try { h.recoverMediaError(); return; } catch(e){} }
+    el.dispatchEvent(new Event('error'));
+  });
+  h.loadSource(url); h.attachMedia(el);
 }
 async function pool(items, n, fn){ let i = 0; await Promise.all(Array.from({ length: Math.min(n, items.length) }, async () => { while (i < items.length) { const k = i++; await fn(items[k], k); } })); }
 async function rbByName(q){
@@ -756,13 +807,13 @@ async function loadBells(){
     let cands = [], seen = new Set();
     for (const q of queries){
       const r = await rbByName(q); if (r) offline = false;
-      (r || []).forEach(x => { if (x.url_resolved && !x.hls && !seen.has(x.stationuuid)) { seen.add(x.stationuuid); cands.push(x); } });
+      (r || []).forEach(x => { if (x.url_resolved && !seen.has(x.stationuuid)) { seen.add(x.stationuuid); cands.push(x); } });
       if (cands.some(x => scoreRb(x, name) >= 6)) break;
     }
     cands = cands.filter(x => scoreRb(x, name) >= 3).sort((a, b) => scoreRb(b, name) - scoreRb(a, name)).slice(0, 3);
     let hit = null;
-    for (const x of cands){ if (await probe(x.url_resolved)) { hit = x; break; } }
-    if (hit) found.push({ id: 'rb-' + hit.stationuuid, name, url: hit.url_resolved, logo: hit.favicon || '', tags: [...new Set(['rock', ...String(hit.tags || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean)])].join(','), bitrate: hit.bitrate || 0, order: idx, src: 'radiobells' });
+    for (const x of cands){ if (await probe(x.url_resolved, 10000, !!x.hls)) { hit = x; break; } }
+    if (hit) found.push({ id: 'rb-' + hit.stationuuid, name, url: hit.url_resolved, logo: hit.favicon || '', tags: [...new Set(['rock', ...String(hit.tags || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean)])].join(','), bitrate: hit.bitrate || 0, hls: !!hit.hls, order: idx, src: 'radiobells' });
     else missing.push(name);
     S.bellsDone++; renderListbar(S.view);
   });
@@ -783,7 +834,7 @@ async function checkList(list){
   S.checking = true; let ok = 0, n = 0;
   list.forEach(s => S.check[s.id] = 'wait'); render();
   await pool(list.slice(), 4, async s => {
-    const good = await probe(s.url); S.check[s.id] = good ? 'ok' : 'dead'; if (good) ok++; n++;
+    const good = await probe(s.url, 10000, s.hls); S.check[s.id] = good ? 'ok' : 'dead'; if (good) ok++; n++;
     const c = $('grid').querySelector(`.card[data-id="${CSS.escape(s.id)}"]`);
     if (c) { c.classList.toggle('dead', !good); const b = c.querySelector('.chk'); if (b) { b.className = 'chk ' + (good ? 'ok' : 'dead'); b.textContent = good ? '● в эфире' : 'нет потока'; } }
     renderListbar(S.view, `Проверено ${n} из ${list.length}`);
@@ -895,7 +946,7 @@ let icyT = null;
 function pollIcy(){
   clearTimeout(icyT);
   const st = S.cur;
-  if (!APP || !window.Android.icy || !st || !S.wantPlay || !S.set.nowPlaying || (S.np[st.id] && !S.np[st.id].icy)) { icyT = setTimeout(pollIcy, 10000); return; }
+  if (!APP || !window.Android.icy || !st || isHls(st.url, st.hls) || !S.wantPlay || !S.set.nowPlaying || (S.np[st.id] && !S.np[st.id].icy)) { icyT = setTimeout(pollIcy, 10000); return; }
   const cb = '__icy' + Date.now();
   window[cb] = t => { window[cb] = undefined;
     const n = parseIcy(t);
@@ -969,7 +1020,7 @@ function render(failed){
   const tv = isTV();
   g.innerHTML = list.map(s => `
     <div class="card${S.cur && S.cur.id === s.id ? ' cur' : ''}${S.check[s.id] === 'dead' ? ' dead' : ''}" role="button" tabindex="0" data-id="${esc(s.id)}" aria-label="${esc(s.name)}">
-      <div class="logo" title="Открыть плеер на весь экран">${logoHTML(s)}${S.cur && S.cur.id === s.id && S.wantPlay ? '<div class="eq"><i></i><i></i><i></i></div>' : ''}</div>
+      <div class="logo">${logoHTML(s)}${S.cur && S.cur.id === s.id && S.wantPlay ? '<div class="eq"><i></i><i></i><i></i></div>' : ''}</div>
       ${S.favs[s.id] ? '<span class="fav"><svg><use href="#i-heart"/></svg></span>' : ''}
       <button class="more" data-more="${esc(s.id)}" aria-label="Меню станции"${tv ? ' tabindex="-1"' : ''}><svg><use href="#i-dots"/></svg></button>
       ${S.check[s.id] ? `<span class="chk ${S.check[s.id]}">${S.check[s.id] === 'ok' ? '● в эфире' : S.check[s.id] === 'dead' ? 'нет потока' : 'проверка…'}</span>` : ''}
@@ -1041,12 +1092,15 @@ function play(st){
   S.cur = st; S.wantPlay = true; S.retries = 0;
   if (changed){ S.acc = 0; S.art = null; setCover.key = null; setCover(st); rollVinyl(); updateArt(); }
   S.started = 0;
-  audio.src = st.url; audio.volume = S.set.vol / 100;
-  audio.play().catch(err => { if (err.name !== 'AbortError') fail(); });
+  audio.volume = S.set.vol / 100;
+  const seq = ++play.seq;
+  attachSrc(audio, st.url, st.hls).then(() => { if (seq !== play.seq || !S.wantPlay) return;
+    audio.play().catch(err => { if (err.name !== 'AbortError') fail(); }); }, () => { if (seq === play.seq) fail(); });
   save(); updatePlayerUI();
 }
-function pause(){ S.wantPlay = false; if (S.started) { S.acc += (Date.now() - S.started)/1000; S.started = 0; }
-  audio.pause(); audio.removeAttribute('src'); audio.load(); updatePlayerUI(); }
+play.seq = 0;
+function pause(){ S.wantPlay = false; play.seq++; if (S.started) { S.acc += (Date.now() - S.started)/1000; S.started = 0; }
+  audio.pause(); detachSrc(audio); updatePlayerUI(); }
 function toggle(){ if (S.wantPlay) pause(); else if (S.cur) play(S.cur); else if (S.view.length) play(S.view[0]); }
 function step(dir){
   const v = S.view.length ? S.view : allKnown(); if (!v.length) return;
@@ -1057,7 +1111,7 @@ function step(dir){
 function fail(){
   if (!S.wantPlay) return;
   if (S.repeat && S.retries < 3){ S.retries++; setText('info', `Соединение… (попытка ${S.retries + 1})`);
-    setTimeout(() => { if (S.wantPlay){ audio.src = S.cur.url; audio.play().catch(()=>{}); } }, 1500 * S.retries); return; }
+    setTimeout(() => { if (S.wantPlay){ attachSrc(audio, S.cur.url, S.cur.hls).then(() => audio.play().catch(()=>{}), fail); } }, 1500 * S.retries); return; }
   S.wantPlay = false; updatePlayerUI(); setText('info', 'Станция недоступна');
   toast('Не удалось подключиться. Проверьте подключение к интернету и попробуйте ещё раз');
 }
@@ -1186,7 +1240,7 @@ $('grid').addEventListener('click', e => {
   if (more){ e.stopPropagation(); const r = more.getBoundingClientRect(); openMenu(findSt(more.dataset.more), r.left - 200, r.bottom + 6); return; }
   const c = e.target.closest('.card'); if (!c) return;
   if (c.dataset.lp) { delete c.dataset.lp; return; }
-  activateCard(c, !!e.target.closest('.logo') || isTV());
+  activateCard(c, isTV());
 });
 $('grid').addEventListener('keydown', e => {
   const c = e.target.closest('.card'); if (!c || !(e.key === 'Enter' || e.key === ' ')) return;

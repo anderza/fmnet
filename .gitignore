@@ -1,9 +1,10 @@
-.gradle/
-build/
-app/build/
-local.properties
-.idea/
 *.iml
 .DS_Store
-captures/
+.gradle/
+.idea/
 RadioNet.apk
+app/build/
+build/
+captures/
+dist/
+local.properties
